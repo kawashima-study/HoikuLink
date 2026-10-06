@@ -1,0 +1,23 @@
+# 秘密情報
+.env
+.env.*
+*.pem
+*.key
+
+# Java / Gradle
+build/
+.gradle/
+*.class
+
+# Node / React
+node_modules/
+dist/
+
+# AWS CDK
+cdk.out/
+
+# IDE・OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
