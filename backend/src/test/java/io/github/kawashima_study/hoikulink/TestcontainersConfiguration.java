@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.utility.MountableFile;
 
 @TestConfiguration(proxyBeanMethods = false)
 class TestcontainersConfiguration {
@@ -14,6 +15,12 @@ class TestcontainersConfiguration {
     @ServiceConnection
     MySQLContainer mysqlContainer() {
         return new MySQLContainer(DockerImageName.parse("mysql:8.4"))
+                .withDatabaseName("hoikulink")
+                .withUsername("hoikulink_app")
+                .withPassword("localapppassword")
+                .withCopyFileToContainer(
+                        MountableFile.forHostPath("docker/mysql/init/01-create-users.sql"),
+                        "/docker-entrypoint-initdb.d/01-create-users.sql")
                 .withCommand(
                         "--character-set-server=utf8mb4",
                         "--collation-server=utf8mb4_ja_0900_as_cs",
