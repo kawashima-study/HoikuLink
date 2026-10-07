@@ -26,7 +26,7 @@
 
 ```json
 {
-  "type": "https://nurserydiary.example/errors/diary-version-conflict",
+  "type": "https://hoikulink.example/errors/diary-version-conflict",
   "title": "他の人が先に更新しました",
   "status": 409,
   "detail": "最新の内容を読み込み直してから、もう一度編集してください",
