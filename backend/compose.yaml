@@ -1,0 +1,20 @@
+services:
+  mysql:
+    image: 'mysql:8.4'
+    environment:
+      - 'MYSQL_DATABASE=hoikulink'
+      - 'MYSQL_USER=hoikulink'
+      - 'MYSQL_PASSWORD=localpassword'
+      - 'MYSQL_ROOT_PASSWORD=localrootpassword'
+    command:
+      - '--character-set-server=utf8mb4'
+      - '--collation-server=utf8mb4_ja_0900_as_cs'
+      - '--default-time-zone=+00:00'
+    ports:
+      - '127.0.0.1:3306:3306'
+  valkey:
+    image: 'valkey/valkey:8'
+    labels:
+      - 'org.springframework.boot.service-connection=redis'
+    ports:
+      - '127.0.0.1:6379:6379'

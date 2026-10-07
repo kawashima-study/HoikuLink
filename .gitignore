@@ -20,4 +20,5 @@ cdk.out/
 .idea/
 .vscode/
 *.iml
-.DS_Store
+.DS_Store.DS_Store
+
