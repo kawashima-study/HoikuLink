@@ -24,7 +24,7 @@ class TestcontainersConfiguration {
                 .withCommand(
                         "--character-set-server=utf8mb4",
                         "--collation-server=utf8mb4_ja_0900_as_cs",
-                        "--default-time-zone=+00:00");
+                        "--default-time-zone=+09:00");
     }
 
     @Bean

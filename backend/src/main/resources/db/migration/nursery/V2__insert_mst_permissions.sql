@@ -1,5 +1,5 @@
--- 権限マスタの初期データ（公開版で使う15個。設計書 3-3）
--- 権限の種類はコードの PermissionCode で定義し、同じ値をここに入れる（ADR-62論点5）
+-- 権限マスタの初期データ
+-- 権限の種類はコードの PermissionCode で定義し、同じ値をここに入れる
 INSERT INTO `nursery`.`mst_permissions` (`permission_code`, `permission_name`, `display_order`) VALUES
                                                                                                     ('CHILD_VIEW_ASSIGNED',           '担当園児の閲覧',                         1),
                                                                                                     ('CHILD_VIEW_ALL',                '全園児の閲覧',                           2),
