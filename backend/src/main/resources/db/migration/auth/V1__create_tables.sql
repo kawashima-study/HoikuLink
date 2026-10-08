@@ -1,5 +1,5 @@
--- 認証モジュールのテーブル（テーブル定義 第3版）
--- 日時はUTC（DATETIME、秒まで）。論理削除とユニーク制約は active_flag（生成列）で両立する（ADR-80）
+-- 認証モジュールのテーブル
+-- 日時はUTC（DATETIME、秒まで）。論理削除とユニーク制約は active_flag（生成列）で両立する
 
 -- アカウント
 CREATE TABLE `auth`.`credentials` (
@@ -25,7 +25,7 @@ CREATE TABLE `auth`.`credentials` (
                                       CONSTRAINT `UQ_credentials_email` UNIQUE (`email`, `active_flag`)
 );
 
--- パスワード履歴（世代番号の大きい順に5件と比べる。ADR-88）
+-- パスワード履歴（世代番号の大きい順に5件と比べる。）
 CREATE TABLE `auth`.`password_histories` (
                                              `password_history_id` CHAR(29)     NOT NULL,
                                              `user_id`             CHAR(29)     NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE `auth`.`password_histories` (
                                              CONSTRAINT `UQ_password_histories_generation` UNIQUE (`user_id`, `generation_no`)
 );
 
--- リフレッシュトークン（書き込みが多いため外部キーなし。ADR-82）
+-- リフレッシュトークン（書き込みが多いため外部キーなし。）
 CREATE TABLE `auth`.`refresh_tokens` (
                                          `refresh_token_id` CHAR(29)    NOT NULL,
                                          `user_id`          CHAR(29)    NOT NULL,

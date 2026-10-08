@@ -1,6 +1,6 @@
--- 連絡帳モジュールのテーブル（テーブル定義 第3版）
+-- 連絡帳モジュールのテーブル
 -- モジュールの外（nursery の園・園児・保育士・保護者）を指すIDには外部キーを付けない
--- 画像は大量データのため、連絡帳への外部キーも付けない（同じ集約としてまとめて保存・削除する。ADR-82）
+-- 画像は大量データのため、連絡帳への外部キーも付けない（同じ集約としてまとめて保存・削除する。）
 
 -- 保育士連絡帳（項目の並びは画面「保育士作成」の順）
 CREATE TABLE `diary`.`teacher_diaries` (
@@ -114,8 +114,8 @@ CREATE TABLE `diary`.`parent_diary_images` (
                                                INDEX `IDX_parent_diary_images_diary` (`parent_diary_id`, `display_order`)
 );
 
--- 連携事項（公開版はテストデータでトップに表示するだけ。ADR-93）
--- 作成日時だけミリ秒まで持ち、作成順に厳密に並べる（ADR-81の例外）
+-- 連携事項（公開版はテストデータでトップに表示するだけ。）
+-- 作成日時だけミリ秒まで持ち、作成順に厳密に並べる
 CREATE TABLE `diary`.`handover_notes` (
                                           `handover_note_id`  CHAR(29)     NOT NULL,
                                           `nursery_id`        CHAR(29)     NOT NULL,

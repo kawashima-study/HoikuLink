@@ -1,5 +1,5 @@
--- 園運営モジュールのテーブル（テーブル定義 第3版）
--- 外部キーは同じモジュールの中の、データが少ないテーブルだけに付ける（ADR-82）
+-- 園運営モジュールのテーブル
+-- 外部キーは同じモジュールの中の、データが少ないテーブルだけに付ける
 -- モジュールの外（auth.credentials）を指すIDには付けない
 
 -- 園
@@ -139,7 +139,7 @@ CREATE TABLE `nursery`.`parents` (
                                      CONSTRAINT `PK_parents` PRIMARY KEY (`parent_id`)
 );
 
--- 園児（メイン保護者は必須。ADR-86）
+-- 園児（メイン保護者は必須。）
 CREATE TABLE `nursery`.`children` (
                                       `child_id`       CHAR(29)    NOT NULL,
                                       `nursery_id`     CHAR(29)    NOT NULL,
