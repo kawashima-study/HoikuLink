@@ -29,7 +29,7 @@ plugins {
     java
     checkstyle
     id("org.springframework.boot") version "4.1.1"
-    id("com.diffplug.spotless") version "8.8.0"
+    id("com.diffplug.spotless") version "8.10.3"
 }
 
 group = "io.github.kawashima_study"
