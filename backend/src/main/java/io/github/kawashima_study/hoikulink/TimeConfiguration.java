@@ -16,5 +16,4 @@ class TimeConfiguration {
     Clock clock() {
         return Clock.system(BusinessTimeZone.JAPAN);
     }
-
 }

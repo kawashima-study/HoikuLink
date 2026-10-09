@@ -21,5 +21,4 @@ class ModularityTests {
     void writesDocumentation() {
         new Documenter(modules).writeDocumentation();
     }
-
 }

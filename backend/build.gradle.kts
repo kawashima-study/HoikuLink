@@ -27,7 +27,9 @@ buildscript {
 
 plugins {
     java
+    checkstyle
     id("org.springframework.boot") version "4.1.1"
+    id("com.diffplug.spotless") version "8.8.0"
 }
 
 group = "io.github.kawashima_study"
@@ -82,6 +84,29 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
     systemProperty("user.timezone", "Asia/Tokyo")
+}
+
+// コードの整形（palantir-java-format）
+spotless {
+    java {
+        target("src/**/*.java")
+        palantirJavaFormat()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+// 書き方のルール（Checkstyle）
+checkstyle {
+    toolVersion = "13.7.0"
+    configDirectory = layout.projectDirectory.dir("config/checkstyle")
+    maxWarnings = 0
+}
+
+// jOOQの生成コードは対象外にする
+tasks.withType<Checkstyle>().configureEach {
+    exclude("**/jooq/generated/**")
 }
 
 // ---------------------------------------------------------------
