@@ -10,7 +10,5 @@ public final class BusinessTimeZone {
 
     public static final ZoneId JAPAN = ZoneId.of("Asia/Tokyo");
 
-    private BusinessTimeZone() {
-    }
-
+    private BusinessTimeZone() {}
 }

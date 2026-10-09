@@ -27,30 +27,45 @@ class LayerRulesTests {
     @TestFactory
     @DisplayName("層の依存の向きが守られている")
     Stream<DynamicTest> layersAreRespected() {
-        return MODULES.stream().map(module -> DynamicTest.dynamicTest(module, () -> {
-            String base = ROOT + "." + module;
-            layeredArchitecture()
-                    .consideringOnlyDependenciesInLayers()
-                    .withOptionalLayers(true)
-                    .layer("Api").definedBy(base + ".api..")
-                    .layer("Types").definedBy(base + ".types..")
-                    .layer("Application").definedBy(base + ".application..")
-                    .layer("Domain").definedBy(base + ".domain..")
-                    .layer("Adapter").definedBy(base + ".adapter..")
-                    .whereLayer("Api").mayNotBeAccessedByAnyLayer()
-                    .whereLayer("Adapter").mayNotBeAccessedByAnyLayer()
-                    .whereLayer("Application").mayOnlyBeAccessedByLayers("Api", "Adapter")
-                    .whereLayer("Domain").mayOnlyBeAccessedByLayers("Application", "Adapter")
-                    .whereLayer("Types").mayOnlyBeAccessedByLayers("Api", "Application", "Domain", "Adapter")
-                    .check(classes);
-        }));
+        return MODULES.stream()
+                .map(module -> DynamicTest.dynamicTest(module, () -> {
+                    String base = ROOT + "." + module;
+                    layeredArchitecture()
+                            .consideringOnlyDependenciesInLayers()
+                            .withOptionalLayers(true)
+                            .layer("Api")
+                            .definedBy(base + ".api..")
+                            .layer("Types")
+                            .definedBy(base + ".types..")
+                            .layer("Application")
+                            .definedBy(base + ".application..")
+                            .layer("Domain")
+                            .definedBy(base + ".domain..")
+                            .layer("Adapter")
+                            .definedBy(base + ".adapter..")
+                            .whereLayer("Api")
+                            .mayNotBeAccessedByAnyLayer()
+                            .whereLayer("Adapter")
+                            .mayNotBeAccessedByAnyLayer()
+                            .whereLayer("Application")
+                            .mayOnlyBeAccessedByLayers("Api", "Adapter")
+                            .whereLayer("Domain")
+                            .mayOnlyBeAccessedByLayers("Application", "Adapter")
+                            .whereLayer("Types")
+                            .mayOnlyBeAccessedByLayers("Api", "Application", "Domain", "Adapter")
+                            .check(classes);
+                }));
     }
 
     @Test
     @DisplayName("domainはSpring・jOOQに依存しない")
     void domainDoesNotDependOnFrameworks() {
-        noClasses().that().resideInAPackage("..domain..")
-                .should().dependOnClassesThat().resideInAnyPackage("org.springframework..", "org.jooq..")
+        noClasses()
+                .that()
+                .resideInAPackage("..domain..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage("org.springframework..", "org.jooq..")
                 .allowEmptyShould(true)
                 .check(classes);
     }
@@ -58,10 +73,14 @@ class LayerRulesTests {
     @Test
     @DisplayName("窓口の実装はpublicにしない")
     void apiAdaptersAreNotPublic() {
-        classes().that().resideInAPackage("..api..").and().haveSimpleNameEndingWith("Adapter")
-                .should().notBePublic()
+        classes()
+                .that()
+                .resideInAPackage("..api..")
+                .and()
+                .haveSimpleNameEndingWith("Adapter")
+                .should()
+                .notBePublic()
                 .allowEmptyShould(true)
                 .check(classes);
     }
-
 }

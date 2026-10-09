@@ -15,5 +15,4 @@ class TimeZoneTests {
     void defaultTimeZoneIsJapan() {
         assertThat(TimeZone.getDefault().toZoneId()).isEqualTo(BusinessTimeZone.JAPAN);
     }
-
 }
