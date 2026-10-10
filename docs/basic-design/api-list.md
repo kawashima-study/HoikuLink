@@ -18,7 +18,7 @@
 | 全APIの共通の確認 | 園運営のSpring Securityのフィルターで、所属・閉園・退職・無操作15分・初期パスワードを確認する（ADR-78） |
 | CSRF | Access Tokenの再発行・ログアウトは、独自ヘッダーとOriginヘッダーも確認する（ADR-36） |
 | 楽観的ロック | 更新（`PUT`）と画像の追加・削除は、読み込んだときの `version` を送る。食い違ったら409 |
-| 名簿の外のID | 404（存在しないものとして扱う。3-6） |
+| 名簿の外のID | 404（存在しないものとして扱う。3-6）。URLの中のIDの形式が違う場合も404 |
 | エラーの形式 | RFC 9457（Problem Details）＋独自のエラーコード（下記。ADR-90）。HTTPメソッドやステータスによって形式を変えない |
 | ページング | 下記（ADR-91） |
 
@@ -26,21 +26,23 @@
 
 ```json
 {
-  "type": "https://hoikulink.example/errors/diary-version-conflict",
+  "type": "urn:hoikulink:error:diary-version-conflict",
   "title": "他の人が先に更新しました",
   "status": 409,
   "detail": "最新の内容を読み込み直してから、もう一度編集してください",
-  "code": "DIARY_VERSION_CONFLICT"
+  "code": "DIARY_VERSION_CONFLICT",
+  "requestId": "（リクエストごとのID）"
 }
 ```
 
 | 項目 | 内容 |
 |---|---|
-| `type` | エラーの種類を表すURI |
+| `type` | エラーの種類を表すURI。`urn:hoikulink:error:` ＋エラーコードを小文字とハイフンにしたもの（公開後に、説明のページのURLへ変更予定。画面は `code` で処理を分ける） |
 | `title` | エラーの種類の短い説明（画面に表示できる文） |
 | `status` | HTTPのステータスコード |
 | `detail` | 今回のエラーの具体的な説明 |
 | `code` | このシステム独自のエラーコード（画面が処理を分けるのに使う） |
+| `requestId` | リクエストごとのID。ログにも同じIDを出す（問い合わせのときに、ログの該当の行を探すため） |
 | `errors` | 入力チェックのエラーのときだけ。項目ごとのエラーの一覧（`[{ "field": "temperature", "code": "OUT_OF_RANGE", "message": "34.0〜43.0で入力してください" }]`） |
 
 ### HTTPステータスの使い分け
