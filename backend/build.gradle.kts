@@ -17,6 +17,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
+        // jOOQのコード生成（generateJooq）で使う部品。版はSpring BootのBOMで決める
         classpath(platform("org.springframework.boot:spring-boot-dependencies:4.1.1"))
         classpath("org.jooq:jooq-codegen")
         classpath("org.flywaydb:flyway-mysql")
@@ -47,29 +48,44 @@ repositories {
 }
 
 dependencies {
-    // ライブラリのバージョンは、Spring BootとSpring ModulithのBOMでまとめて決める
+    // BOM（ライブラリの版をまとめて決める）
     implementation(platform(SpringBootPlugin.BOM_COORDINATES))
     implementation(platform("org.springframework.modulith:spring-modulith-bom:2.1.1"))
-    // BOMに含まれないライブラリは、版の番号を書く
-    implementation("com.github.f4b6a3:ulid-creator:5.2.4")
     developmentOnly(platform(SpringBootPlugin.BOM_COORDINATES))
 
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    implementation("org.springframework.boot:spring-boot-starter-flyway")
-    implementation("org.springframework.boot:spring-boot-starter-jooq")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    // APIの入力のチェック（@NotBlank など）
-    implementation("org.springframework.boot:spring-boot-starter-validation")
+    // Web・API
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+
+    // セキュリティ
+    implementation("org.springframework.boot:spring-boot-starter-security")
+
+    // DB
+    implementation("org.springframework.boot:spring-boot-starter-jooq")
+    implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-mysql")
-    implementation("org.springframework.modulith:spring-modulith-observability-api")
-    implementation("org.springframework.modulith:spring-modulith-starter-core")
-    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("com.mysql:mysql-connector-j")
+
+    // キャッシュ（Valkey）
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+    // モジュール（Spring Modulith）
+    implementation("org.springframework.modulith:spring-modulith-starter-core")
+    runtimeOnly("org.springframework.modulith:spring-modulith-runtime")
+
+    // 監視
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.modulith:spring-modulith-observability-api")
     runtimeOnly("org.springframework.modulith:spring-modulith-actuator")
     runtimeOnly("org.springframework.modulith:spring-modulith-observability-core")
-    runtimeOnly("org.springframework.modulith:spring-modulith-runtime")
+
+    // ID（BOMに含まれないため、版の番号を書く）
+    implementation("com.github.f4b6a3:ulid-creator:5.2.4")
+
+    // 手元の開発（起動時にDocker ComposeでMySQL・Valkeyを起動する）
+    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+
+    // テスト
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
     testImplementation("org.springframework.boot:spring-boot-starter-flyway-test")
@@ -121,7 +137,7 @@ val jooqModules = listOf("auth", "nursery", "diary")
 val migrationDir = layout.projectDirectory.dir("src/main/resources/db/migration")
 val jooqOutputDir = layout.buildDirectory.dir("generated-sources/jooq")
 
-val generateJooq by tasks.registering {
+val generateJooq = tasks.register("generateJooq") {
     group = "jooq"
     description = "マイグレーションからテーブルを作り、jOOQのコードを生成する"
     inputs.dir(migrationDir)
