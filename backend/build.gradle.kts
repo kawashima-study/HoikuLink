@@ -50,6 +50,7 @@ dependencies {
     // ライブラリのバージョンは、Spring BootとSpring ModulithのBOMでまとめて決める
     implementation(platform(SpringBootPlugin.BOM_COORDINATES))
     implementation(platform("org.springframework.modulith:spring-modulith-bom:2.1.1"))
+    // BOMに含まれないライブラリは、版の番号を書く
     implementation("com.github.f4b6a3:ulid-creator:5.2.4")
     developmentOnly(platform(SpringBootPlugin.BOM_COORDINATES))
 
