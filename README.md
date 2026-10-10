@@ -10,10 +10,10 @@
 
 ## ドキュメント
 
-- [テーブル定義](docs/basic-design/database/table-design.md)
-- [ER図](docs/basic-design/database/er-diagram.md)
-- [API一覧](docs/basic-design/api-list.md)
-- [画面一覧](docs/basic-design/screen-list.md)
+- [テーブル定義](docs/design/database/table-design.md)
+- [ER図](docs/design/database/er-diagram.md)
+- [API一覧](docs/design/api/api-list.md)
+- [画面一覧](docs/design/screens/screen-list.md)
 
 ## 技術スタック（予定）
 
