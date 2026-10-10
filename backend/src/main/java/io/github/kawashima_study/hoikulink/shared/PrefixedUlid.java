@@ -35,7 +35,7 @@ public final class PrefixedUlid {
         Objects.requireNonNull(value, "IDがnullです。");
         if (!ID_PATTERN.matcher(value).matches() || !value.startsWith(prefix)) {
             // 入力された値をそのまま例外のメッセージに入れない（ログに不正な文字列が残るのを防ぐ）。
-            throw new IllegalArgumentException("IDの形式が正しくありません。プレフィックス：" + prefix);
+            throw new InvalidIdException(prefix);
         }
         return value;
     }

@@ -30,6 +30,7 @@
         </module>
         <module name="ParameterNumber">
             <property name="max" value="4"/>
+            <!-- Springなどの部品の決まった処理を上書きするメソッドは、引数の数を変えられないため対象外にする -->
             <property name="ignoreOverriddenMethods" value="true"/>
         </module>
         <module name="NestedIfDepth">
