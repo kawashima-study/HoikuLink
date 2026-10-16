@@ -8,13 +8,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 
 /**
- * 共通のエラーコードとHTTPのステータスの対応表。
+ * 共通のエラーコードとHTTPのステータスの対応表の設定
  */
 @Configuration(proxyBeanMethods = false)
 class CommonErrorStatusConfiguration {
 
+    /** 入力内容の誤りを表すHTTPのステータス（422 Unprocessable Content） */
     private static final int UNPROCESSABLE_CONTENT = 422;
 
+    /**
+     * 共通のエラーコードとHTTPのステータスの対応表を作成
+     *
+     * @return 共通のエラーコードの対応表
+     */
     @Bean
     ErrorStatusMapping commonErrorStatusMapping() {
         return ErrorStatusMapping.of(
