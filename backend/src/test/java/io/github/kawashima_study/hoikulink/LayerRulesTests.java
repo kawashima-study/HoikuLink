@@ -14,18 +14,32 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+/**
+ * モジュール内の層のルールのテスト（ArchUnit）
+ * <p>モジュールどうしの依存は ModularityTests（Spring Modulith）で確認する
+ */
 @DisplayName("モジュール内の層のルール")
 class LayerRulesTests {
 
+    /** 確認の対象のパッケージの根元 */
     private static final String ROOT = "io.github.kawashima_study.hoikulink";
+
+    /** 層のルールを確認するモジュール */
     private static final List<String> MODULES = List.of("auth", "nursery", "diary");
 
+    /** 確認の対象のクラス（テストのクラスは含めない） */
     private final JavaClasses classes = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
             .importPackages(ROOT);
 
+    /**
+     * モジュールごとに層の依存の向きが守られていることを確認
+     * <p>どのモジュールで失敗したか分かるようモジュールごとに別のテストとして動かす
+     *
+     * @return モジュールごとのテスト
+     */
     @TestFactory
-    @DisplayName("層の依存の向きが守られている")
+    @DisplayName("層の依存の向きが守られている。")
     Stream<DynamicTest> layersAreRespected() {
         return MODULES.stream()
                 .map(module -> DynamicTest.dynamicTest(module, () -> {
@@ -57,8 +71,11 @@ class LayerRulesTests {
                 }));
     }
 
+    /**
+     * domain のクラスがSpringとjOOQに依存しないことを確認
+     */
     @Test
-    @DisplayName("domainはSpring・jOOQに依存しない")
+    @DisplayName("domainはSpring・jOOQに依存しない。")
     void domainDoesNotDependOnFrameworks() {
         noClasses()
                 .that()
@@ -70,8 +87,11 @@ class LayerRulesTests {
                 .check(classes);
     }
 
+    /**
+     * 窓口の実装（名前が Adapter で終わるクラス）が public でないことを確認
+     */
     @Test
-    @DisplayName("窓口の実装はpublicにしない")
+    @DisplayName("窓口の実装はpublicにしない。")
     void apiAdaptersAreNotPublic() {
         classes()
                 .that()

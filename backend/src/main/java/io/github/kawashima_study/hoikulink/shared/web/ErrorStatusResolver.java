@@ -11,15 +11,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 /**
- * 各モジュールが登録した対応表をまとめ、エラーコードからHTTPのステータスを決める。
+ * 各モジュールが登録した対応表をまとめエラーコードからHTTPのステータスを決める部品
  */
 @Component
 public class ErrorStatusResolver {
 
+    /** ログの出力先 */
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorStatusResolver.class);
 
+    /** すべてのモジュールのエラーコードとHTTPのステータスの対応 */
     private final Map<String, HttpStatus> statuses;
 
+    /**
+     * 各モジュールの対応表をまとめて作成
+     *
+     * @param mappings Springに登録されているすべての対応表
+     * @throws IllegalStateException 同じエラーコードが複数の対応表に登録されている場合
+     */
     public ErrorStatusResolver(List<ErrorStatusMapping> mappings) {
         Map<String, HttpStatus> merged = new HashMap<>();
         for (ErrorStatusMapping mapping : mappings) {
@@ -32,6 +40,13 @@ public class ErrorStatusResolver {
         this.statuses = Map.copyOf(merged);
     }
 
+    /**
+     * エラーコードからHTTPのステータスを決める
+     * <p>登録されていないエラーコードの場合は内部の情報を返さないよう500としてログに記録する
+     *
+     * @param errorCode エラーコード
+     * @return HTTPのステータス
+     */
     public HttpStatus resolve(ErrorCode errorCode) {
         HttpStatus status = statuses.get(errorCode.code());
         if (status == null) {

@@ -7,11 +7,17 @@ import java.util.TimeZone;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+/**
+ * タイムゾーンの設定のテスト
+ */
 @DisplayName("タイムゾーンの設定")
 class TimeZoneTests {
 
+    /**
+     * テストを実行するときの既定のタイムゾーンが日本時間であることを確認
+     */
     @Test
-    @DisplayName("テストのタイムゾーンが日本時間に固定されている")
+    @DisplayName("テストのタイムゾーンが日本時間に固定されている。")
     void defaultTimeZoneIsJapan() {
         assertThat(TimeZone.getDefault().toZoneId()).isEqualTo(BusinessTimeZone.JAPAN);
     }

@@ -8,9 +8,18 @@ import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
+/**
+ * テストで使用するコンテナ（MySQLとValkey）の設定
+ */
 @TestConfiguration(proxyBeanMethods = false)
 class TestcontainersConfiguration {
 
+    /**
+     * 手元と同じ設定のMySQLのコンテナを作成
+     * <p>DBのユーザーの作成の SQL をコンテナの起動時に実行する
+     *
+     * @return MySQLのコンテナ
+     */
     @Bean
     @ServiceConnection
     MySQLContainer mysqlContainer() {
@@ -27,6 +36,11 @@ class TestcontainersConfiguration {
                         "--default-time-zone=+09:00");
     }
 
+    /**
+     * Valkey（Redis互換）のコンテナを作成
+     *
+     * @return Valkeyのコンテナ
+     */
     @Bean
     @ServiceConnection(name = "redis")
     GenericContainer<?> valkeyContainer() {
