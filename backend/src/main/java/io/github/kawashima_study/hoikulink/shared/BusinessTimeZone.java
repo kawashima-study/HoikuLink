@@ -4,7 +4,7 @@ import java.time.ZoneId;
 
 /**
  * このシステムの業務のタイムゾーン（日本時間）。
- * 日付（LocalDate）の判定や、表示・ログの時刻に使う。
+ * 日付（LocalDate）の判定や、表示・ログの時刻に使用。
  */
 public final class BusinessTimeZone {
 

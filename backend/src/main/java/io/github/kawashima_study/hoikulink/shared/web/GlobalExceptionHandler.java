@@ -25,8 +25,8 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
- * すべての例外を、RFC 9457の形式（code・requestIdを追加）の応答に変換する。
- * 500のときは、内部の情報（例外のメッセージなど）を返さない。
+ * すべての例外をRFC 9457の形式（code・requestIdを追加）の応答に変換する。
+ * 500のときは内部の情報（例外のメッセージなど）を返さない。
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
