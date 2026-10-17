@@ -3,7 +3,7 @@
 - 作成日：2026-10-07
 - 元にしたテーブル定義：table-design.md（修正版）
 - 実線：外部キーあり（同じモジュールの中の、データが少ないテーブル）
-- 点線：外部キーなし。①モジュールをまたぐ関係（論点N）、②大量データ・書き込みが多いテーブル（連絡帳の画像、Refresh Token。P2）。IDで参照し、集約とアプリで整合性を守る
+- 点線：外部キーなし。①モジュールをまたぐ関係、②大量データ・書き込みが多いテーブル（連絡帳の画像、Refresh Token）。IDで参照し、集約とアプリで整合性を守る
 - 監査項目（created_at など）と論理削除の列は省略
 
 ## 全体
@@ -48,7 +48,7 @@ erDiagram
         VARCHAR email
         VARCHAR password_hash
         BOOLEAN must_change_password
-        INT failed_login_count
+        TINYINT failed_login_count
         DATETIME locked_at
         DATETIME unlocked_at
         CHAR29 unlocked_by
@@ -163,7 +163,7 @@ erDiagram
 
 ## モジュールごとの見方
 
-| モジュール（スキーマ） | テーブル | 集約（2-8-2） |
+| モジュール（スキーマ） | テーブル | 集約 |
 |---|---|---|
 | auth | credentials、password_histories | UserAccount |
 | auth | refresh_tokens | RefreshToken |

@@ -1,36 +1,35 @@
 # テーブル定義（公開版・修正版 第3版）
 
 - 作成日：2026-10-07
-- 元にした設計書：HoikuLink_設計整理（設計書）
 - 第2版の変更：日時の型、Enum（MySQLの `ENUM` 型）、マスタの名前（`mst_`）、論理名、備考の書き方、制約・インデックスの書き方をそろえた。連絡帳の項目を画面の項目に合わせた（末尾の「第2版の変更点」）
-- 第3版の変更：選択肢をJavaの `enum`＋DBは文字（`VARCHAR`）に変更。論点X（秒まで）・Y（園コードは追加要件）・Z（メイン保護者は必須）・AA（作成保育士IDと作成者を分ける）、選択肢の値・文字数・画像の上限を確定
+- 第3版の変更：選択肢をJavaの `enum`＋DBは文字（`VARCHAR`）に変更。日時は秒まで、園コードは追加要件、メイン保護者は必須、作成保育士IDと作成者を分ける、選択肢の値・文字数・画像の上限を確定
 
 ## 共通ルール
 
-| 項目 | ルール | 根拠 |
-|---|---|---|
-| スキーマ | モジュールごとに分ける：`auth`（認証）、`nursery`（園運営）、`diary`（連絡帳） | 2-4 |
-| ID | 3文字のプレフィックス＋ULID（26文字）。型は `CHAR(29)` | ADR-47 |
-| 日時 | `DATETIME`（秒まで）。UTCで保存し、アプリが値を設定する | ADR-81 |
-| 日付 | `DATE`。日本の暦日（連絡帳の対象日、所属開始日・終了日、契約終了日など、日付だけで足りるもの） | ADR-81 |
-| 時刻 | `TIME`。日本時間の時刻（検温時刻、入眠・起床の時刻など） | ― |
-| 選択肢 | Javaの `enum` で管理し、DBには `enum` の名前を文字（`VARCHAR(20)`）で保存する。並び順の番号では保存しない。値の追加・並べ替えはJavaの `enum` を変えるだけで、DBの変更は不要 | ADR-84 |
-| マスタ | 全園共通で、アプリ（Flyway）が投入する固定のデータは、論理名に「マスタ」、物理名に `mst_` を付ける | ― |
-| 文字コード・照合順序 | `utf8mb4`、`utf8mb4_ja_0900_as_cs`（日本語の並び順、濁点・大文字小文字を区別）。メールアドレスは保存前にアプリで小文字にそろえる | ADR-94 |
-| 論理削除 | `deleted_at` に削除日時を入れる | ADR-50 |
-| 論理削除とユニーク制約 | 生成列 `active_flag`（削除されていなければ1、削除済みはNULL）をユニーク制約に含める | ADR-80 |
-| 外部キー | 同じモジュールの中の、データが少ないテーブルだけに付ける | ADR-82 |
+| 項目 | ルール |
+|---|---|
+| スキーマ | モジュールごとに分ける：`auth`（認証）、`nursery`（園運営）、`diary`（連絡帳） |
+| ID | 3文字のプレフィックス＋ULID（26文字）。型は `CHAR(29)` |
+| 日時 | `DATETIME`（秒まで）。日本時間で保存し、アプリが値を設定する（このシステムは日本国内専用） |
+| 日付 | `DATE`。日本の暦日（連絡帳の対象日、所属開始日・終了日、契約終了日など、日付だけで足りるもの） |
+| 時刻 | `TIME`。日本時間の時刻（検温時刻、入眠・起床の時刻など） |
+| 選択肢 | Javaの `enum` で管理し、DBには `enum` の名前を文字（`VARCHAR(20)`）で保存する。並び順の番号では保存しない。値の追加・並べ替えはJavaの `enum` を変えるだけで、DBの変更は不要 |
+| マスタ | 全園共通で、アプリ（Flyway）が投入する固定のデータは、論理名に「マスタ」、物理名に `mst_` を付ける |
+| 文字コード・照合順序 | `utf8mb4`、`utf8mb4_ja_0900_as_cs`（日本語の並び順、濁点・大文字小文字を区別）。メールアドレスは保存前にアプリで小文字にそろえる |
+| 論理削除 | `deleted_at` に削除日時を入れる |
+| 論理削除とユニーク制約 | 生成列 `active_flag`（削除されていなければ1、削除済みはNULL）をユニーク制約に含める |
+| 外部キー | 同じモジュールの中の、データが少ないテーブルだけに付ける |
 
 ### 共通の項目（備考に「共通：…」と書いたもの）
 
 | 項目 | 論理名 | 物理名 | 型 | NN | 内容 |
 |---|---|---|---|:-:|---|
-| 監査項目 | 作成日時 | created_at | DATETIME | ○ | 行を作成した日時（UTC） |
+| 監査項目 | 作成日時 | created_at | DATETIME | ○ | 行を作成した日時（日本時間） |
 | 監査項目 | 作成者 | created_by | VARCHAR(29) | ○ | 操作したユーザーID。バッチ・初期データは `SYSTEM` |
 | 監査項目 | 更新日時 | updated_at | DATETIME | ○ | 最後に更新した日時。作成時は作成日時と同じ値を入れる |
 | 監査項目 | 更新者 | updated_by | VARCHAR(29) | ○ | 最後に更新したユーザーID。作成時は作成者と同じ値を入れる |
 | 論理削除 | 削除日時 | deleted_at | DATETIME | | 削除した日時。削除されていなければNULL |
-| ユニーク制約用 | 有効フラグ | active_flag | TINYINT（生成列） | | `deleted_at` がNULLなら1、それ以外はNULL。DBが自動で計算する（ADR-80） |
+| ユニーク制約用 | 有効フラグ | active_flag | TINYINT（生成列） | | `deleted_at` がNULLなら1、それ以外はNULL。DBが自動で計算する |
 
 ### 備考の書き方
 
@@ -72,19 +71,19 @@
 
 ## credentials（アカウント）
 
-ログインに必要な情報だけを持つ。保育士・保護者の業務情報は園運営モジュールが持つ（5-2-2）。
+ログインに必要な情報だけを持つ。保育士・保護者の業務情報は園運営モジュールが持つ。
 
 |No|論理名|物理名|型|PK|FK|NN|UQ|デフォルト値|備考|
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|---|
 |1|ユーザーID|user_id|CHAR(29)|○||○|○||`USR`＋ULID|
-|2|ログインID|email|VARCHAR(255)|||○|||メールアドレス。保存前にアプリで小文字にそろえる（ADR-94）|
-|3|パスワードハッシュ|password_hash|VARCHAR(255)|||○|||Argon2id（ADR-30）|
-|4|パスワード変更要否|must_change_password|BOOLEAN|||○||TRUE|初期パスワードの間はTRUE。パスワード変更・ログアウト以外のAPIを拒否する（ADR-57）|
+|2|ログインID|email|VARCHAR(255)|||○|||メールアドレス。保存前にアプリで小文字にそろえる|
+|3|パスワードハッシュ|password_hash|VARCHAR(255)|||○|||Argon2id|
+|4|パスワード変更要否|must_change_password|BOOLEAN|||○||TRUE|初期パスワードの間はTRUE。パスワード変更・ログアウト以外のAPIを拒否する|
 |5|パスワード変更日時|password_changed_at|DATETIME|||||NULL||
-|6|ログイン失敗回数|failed_login_count|TINYINT|||○||0|5回でロック。ログイン成功でリセット（ADR-39）|
+|6|ログイン失敗回数|failed_login_count|TINYINT|||○||0|5回でロック。ログイン成功でリセット|
 |7|ロック日時|locked_at|DATETIME|||||NULL|ロック中ならNULL以外|
 |8|ロック解除日時|unlocked_at|DATETIME|||||NULL||
-|9|ロック解除者|unlocked_by|CHAR(29)|||||NULL|解除した園長・主任のユーザーID（ADR-55）|
+|9|ロック解除者|unlocked_by|CHAR(29)|||||NULL|解除した園長・主任のユーザーID|
 |10|アカウント停止日時|suspended_at|DATETIME|||||NULL|アカウント停止中ならNULL以外|
 |11|最終ログイン日時|last_login_at|DATETIME|||||NULL||
 |12|作成日時|created_at|DATETIME|||○|||共通：監査項目|
@@ -105,7 +104,7 @@
 
 ## password_histories（パスワード履歴）
 
-過去5世代のパスワードの再利用を禁止する（ADR-30）。世代番号の大きい順に5件と比べる。
+過去5世代のパスワードの再利用を禁止する。世代番号の大きい順に5件と比べる。
 
 |No|論理名|物理名|型|PK|FK|NN|UQ|デフォルト値|備考|
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|---|
@@ -130,7 +129,7 @@
 
 ## refresh_tokens（リフレッシュトークン）
 
-Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
+Opaque Token。DBにはハッシュ値だけを保存する。
 
 |No|論理名|物理名|型|PK|FK|NN|UQ|デフォルト値|備考|
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|---|
@@ -164,9 +163,9 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|---|
 |1|園ID|nursery_id|CHAR(29)|○||○|○||`NRS`＋ULID|
 |2|園名|nursery_name|VARCHAR(100)|||○||||
-|3|園の状態|status|VARCHAR(20)|||○||'ACTIVE'|値：`ACTIVE`（運営中）／`CLOSED`（閉園）（ADR-48）|
-|4|契約終了日|contract_end_date|DATE|||||NULL|この日の23:59:59（日本時間）まで利用可能（ADR-69）|
-|5|連絡帳保存年数|diary_retention_years|TINYINT|||○||5|退園からの保存期間（ADR-44）|
+|3|園の状態|status|VARCHAR(20)|||○||'ACTIVE'|値：`ACTIVE`（運営中）／`CLOSED`（閉園）|
+|4|契約終了日|contract_end_date|DATE|||||NULL|この日の23:59:59（日本時間）まで利用可能|
+|5|連絡帳保存年数|diary_retention_years|TINYINT|||○||5|退園からの保存期間|
 |6|郵便番号|postal_code|VARCHAR(8)|||||||
 |7|都道府県|prefecture|VARCHAR(20)|||||||
 |8|市区町村|city|VARCHAR(100)|||||||
@@ -176,7 +175,7 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |12|作成者|created_by|VARCHAR(29)|||○|||共通：監査項目|
 |13|更新日時|updated_at|DATETIME|||○|||共通：監査項目|
 |14|更新者|updated_by|VARCHAR(29)|||○|||共通：監査項目|
-|15|削除日時|deleted_at|DATETIME|||||NULL|共通：論理削除。閉園日時を入れる（ADR-46）|
+|15|削除日時|deleted_at|DATETIME|||||NULL|共通：論理削除。閉園日時を入れる|
 
 ### 制約・インデックス
 
@@ -188,7 +187,7 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 
 ## nursery_roles（役職）
 
-園ごとの役職。初期データは園長(4)・主任(3)・副主任(2)・一般(1)（3-4）。
+園ごとの役職。初期データは園長(4)・主任(3)・副主任(2)・一般(1)。
 
 |No|論理名|物理名|型|PK|FK|NN|UQ|デフォルト値|備考|
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|---|
@@ -215,11 +214,11 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 
 ## mst_permissions（権限マスタ）
 
-全園共通の権限の一覧（表示用）。権限の種類はコードの `PermissionCode` で定義し、同じ値をFlywayで投入する（ADR-62論点5）。画面からは変更しないため、監査項目は持たない。
+全園共通の権限の一覧（表示用）。権限の種類はコードの `PermissionCode` で定義し、同じ値をFlywayで投入する。画面からは変更しないため、監査項目は持たない。
 
 |No|論理名|物理名|型|PK|FK|NN|UQ|デフォルト値|備考|
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|---|
-|1|権限コード|permission_code|VARCHAR(50)|○||○|○||例：`TEACHER_DIARY_EDIT_ALL`（3-3）|
+|1|権限コード|permission_code|VARCHAR(50)|○||○|○||例：`TEACHER_DIARY_EDIT_ALL`|
 |2|権限名|permission_name|VARCHAR(100)|||○|||画面の表示名|
 |3|表示順|display_order|INT|||○|||権限の設定画面（追加要件）での並び順|
 
@@ -292,9 +291,9 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |4|役職ID|role_id|CHAR(29)||○|○|||参照先：nursery_roles.role_id|
 |5|姓|last_name|VARCHAR(50)|||○||||
 |6|名|first_name|VARCHAR(50)|||○||||
-|7|メールアドレス|email|VARCHAR(255)|||○|||業務情報。ログインIDと同時に変更する（5-2-2）|
+|7|メールアドレス|email|VARCHAR(255)|||○|||業務情報。ログインIDと同時に変更する|
 |8|所属開始日|started_on|DATE|||○||||
-|9|所属終了日|ended_on|DATE|||||NULL|退職日。事前に入力できる（ADR-43）|
+|9|所属終了日|ended_on|DATE|||||NULL|退職日。事前に入力できる|
 |10|作成日時|created_at|DATETIME|||○|||共通：監査項目|
 |11|作成者|created_by|VARCHAR(29)|||○|||共通：監査項目|
 |12|更新日時|updated_at|DATETIME|||○|||共通：監査項目|
@@ -315,7 +314,7 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 
 ## class_assignments（担当）
 
-保育士が担当するクラス（複数可。ADR-62論点3）。担当の解除は行の削除（物理削除）で表す。
+保育士が担当するクラス（複数可）。担当の解除は行の削除（物理削除）で表す。
 
 |No|論理名|物理名|型|PK|FK|NN|UQ|デフォルト値|備考|
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|---|
@@ -350,8 +349,8 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |6|生年月日|birthday|DATE|||○||||
 |7|性別|gender|VARCHAR(20)|||○|||値：`MALE`（男）／`FEMALE`（女）／`UNANSWERED`（回答しない）|
 |8|入園日|enrolled_on|DATE|||○||||
-|9|退園日|left_on|DATE|||||NULL|所属期間で管理（ADR-43）|
-|10|メイン保護者ID|main_parent_id|CHAR(29)||○|○|||参照先：parents.parent_id。必須。園児の登録時に、保護者・園児・紐づけを1つのトランザクションで作る（ADR-12、ADR-86）|
+|9|退園日|left_on|DATE|||||NULL|所属期間で管理|
+|10|メイン保護者ID|main_parent_id|CHAR(29)||○|○|||参照先：parents.parent_id。必須。園児の登録時に、保護者・園児・紐づけを1つのトランザクションで作る|
 |11|作成日時|created_at|DATETIME|||○|||共通：監査項目|
 |12|作成者|created_by|VARCHAR(29)|||○|||共通：監査項目|
 |13|更新日時|updated_at|DATETIME|||○|||共通：監査項目|
@@ -405,7 +404,7 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |3|園児ID|child_id|CHAR(29)||○|○|||参照先：children.child_id|
 |4|続柄|relationship|VARCHAR(20)|||○|||値：`FATHER`（父）／`MOTHER`（母）／`GRANDFATHER`（祖父）／`GRANDMOTHER`（祖母）／`OTHER`（その他）|
 |5|紐づけ開始日|started_on|DATE|||○||||
-|6|紐づけ終了日|ended_on|DATE|||||NULL|紐づけ解除・退園（ADR-13、ADR-43）|
+|6|紐づけ終了日|ended_on|DATE|||||NULL|紐づけ解除・退園|
 |7|作成日時|created_at|DATETIME|||○|||共通：監査項目|
 |8|作成者|created_by|VARCHAR(29)|||○|||共通：監査項目|
 |9|更新日時|updated_at|DATETIME|||○|||共通：監査項目|
@@ -437,8 +436,8 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |1|保育士連絡帳ID|teacher_diary_id|CHAR(29)|○||○|○||`TDR`＋ULID|
 |2|園ID|nursery_id|CHAR(29)|||○|||参照先：nursery.nurseries.nursery_id（外部キーなし：モジュール外）。閲覧範囲の条件に使う|
 |3|園児ID|child_id|CHAR(29)|||○|||参照先：nursery.children.child_id（外部キーなし：モジュール外）|
-|4|作成保育士ID|author_teacher_id|CHAR(29)|||○|||参照先：nursery.teachers.teacher_id（外部キーなし：モジュール外）。自分の連絡帳か（`OWN`）の判定に使う。監査項目の作成者（ユーザーID）とは別に持つ（ADR-87）|
-|5|作成保育士名|author_name|VARCHAR(100)|||○|||スナップショット（ADR-45）|
+|4|作成保育士ID|author_teacher_id|CHAR(29)|||○|||参照先：nursery.teachers.teacher_id（外部キーなし：モジュール外）。自分の連絡帳か（`OWN`）の判定に使う。監査項目の作成者（ユーザーID）とは別に持つ|
+|5|作成保育士名|author_name|VARCHAR(100)|||○|||スナップショット|
 |6|園児名|child_name|VARCHAR(100)|||○|||スナップショット|
 |7|クラス名|class_name|VARCHAR(50)|||○|||スナップショット|
 |8|対象日|target_date|DATE|||○|||画面：日付|
@@ -470,15 +469,15 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |種別|名前|カラム|参照先・備考|
 |---|---|---|---|
 |PK|PRIMARY|teacher_diary_id|詳細の取得|
-|UQ|UQ_teacher_diaries_child_date|child_id, target_date, active_flag|1園児1日1件（削除済みは除く。ADR-80）|
-|IDX|IDX_teacher_diaries_search|nursery_id, child_id, target_date|検索・一覧：`WHERE nursery_id = ? AND child_id IN (...) AND target_date BETWEEN ? AND ? AND deleted_at IS NULL`（3-6）|
+|UQ|UQ_teacher_diaries_child_date|child_id, target_date, active_flag|1園児1日1件（削除済みは除く）|
+|IDX|IDX_teacher_diaries_search|nursery_id, child_id, target_date|検索・一覧：`WHERE nursery_id = ? AND child_id IN (...) AND target_date BETWEEN ? AND ? AND deleted_at IS NULL`|
 
-必須の入力項目（体調・機嫌など）は、画面の設計時（10/30まで）に決める。文字数の上限は、短い項目200文字・コメント1,000文字（ADR-85）。
+必須の入力項目（体調・機嫌など）は、画面の設計時（10/30まで）に決める。文字数の上限は、短い項目200文字・コメント1,000文字。
 ---
 
 ## teacher_diary_images（保育士連絡帳画像）
 
-1つの保育士連絡帳につき最大5枚。枚数の上限は連絡帳の集約（TeacherDiary）が守る。位置情報を除去した画像をS3に保存する（ADR-56）。閲覧URLは30秒の署名付きURLを毎回作るため保存しない（8-10）。
+1つの保育士連絡帳につき最大5枚。枚数の上限は連絡帳の集約（TeacherDiary）が守る。位置情報を除去した画像をS3に保存する。閲覧URLは30秒の署名付きURLを毎回作るため保存しない。
 
 |No|論理名|物理名|型|PK|FK|NN|UQ|デフォルト値|備考|
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|---|
@@ -486,7 +485,7 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |2|保育士連絡帳ID|teacher_diary_id|CHAR(29)|||○|||参照先：teacher_diaries.teacher_diary_id（外部キーなし：大量データ。同じ集約としてまとめて保存・削除する）|
 |3|S3キー|s3_object_key|VARCHAR(255)|||○|○||S3の保存場所。IDで作る（元のファイル名は使わない）|
 |4|画像種類|content_type|VARCHAR(20)|||○|||値：`JPEG`／`PNG`|
-|5|ファイルサイズ|file_size_bytes|INT|||○|||画像1枚の大きさ（バイト）。1枚の上限は10MB（ADR-85）|
+|5|ファイルサイズ|file_size_bytes|INT|||○|||画像1枚の大きさ（バイト）。1枚の上限は10MB|
 |6|表示順|display_order|TINYINT|||○||1|連絡帳の中での画像の並び順（1〜5）|
 |7|作成日時|created_at|DATETIME|||○|||共通：監査項目|
 |8|作成者|created_by|VARCHAR(29)|||○|||共通：監査項目|
@@ -513,8 +512,8 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |1|保護者連絡帳ID|parent_diary_id|CHAR(29)|○||○|○||`PDR`＋ULID|
 |2|園ID|nursery_id|CHAR(29)|||○|||参照先：nursery.nurseries.nursery_id（外部キーなし：モジュール外）。閲覧範囲の条件に使う|
 |3|園児ID|child_id|CHAR(29)|||○|||参照先：nursery.children.child_id（外部キーなし：モジュール外）|
-|4|作成保護者ID|author_parent_id|CHAR(29)|||○|||参照先：nursery.parents.parent_id（外部キーなし：モジュール外）。自分の連絡帳かの判定に使う（ADR-87）|
-|5|作成保護者名|author_name|VARCHAR(100)|||○|||スナップショット（ADR-45）|
+|4|作成保護者ID|author_parent_id|CHAR(29)|||○|||参照先：nursery.parents.parent_id（外部キーなし：モジュール外）。自分の連絡帳かの判定に使う|
+|5|作成保護者名|author_name|VARCHAR(100)|||○|||スナップショット|
 |6|園児名|child_name|VARCHAR(100)|||○|||スナップショット|
 |7|クラス名|class_name|VARCHAR(50)|||○|||スナップショット|
 |8|対象日|target_date|DATE|||○|||画面：日付|
@@ -546,8 +545,8 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |種別|名前|カラム|参照先・備考|
 |---|---|---|---|
 |PK|PRIMARY|parent_diary_id|詳細の取得|
-|UQ|UQ_parent_diaries_child_date|child_id, target_date, active_flag|1園児1日1件（削除済みは除く。ADR-80）|
-|IDX|IDX_parent_diaries_search|nursery_id, child_id, target_date|検索・一覧（3-6）|
+|UQ|UQ_parent_diaries_child_date|child_id, target_date, active_flag|1園児1日1件（削除済みは除く）|
+|IDX|IDX_parent_diaries_search|nursery_id, child_id, target_date|検索・一覧|
 
 ---
 
@@ -561,7 +560,7 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |2|保護者連絡帳ID|parent_diary_id|CHAR(29)|||○|||参照先：parent_diaries.parent_diary_id（外部キーなし：大量データ。同じ集約としてまとめて保存・削除する）|
 |3|S3キー|s3_object_key|VARCHAR(255)|||○|○||S3の保存場所。IDで作る（元のファイル名は使わない）|
 |4|画像種類|content_type|VARCHAR(20)|||○|||値：`JPEG`／`PNG`|
-|5|ファイルサイズ|file_size_bytes|INT|||○|||画像1枚の大きさ（バイト）。1枚の上限は10MB（ADR-85）|
+|5|ファイルサイズ|file_size_bytes|INT|||○|||画像1枚の大きさ（バイト）。1枚の上限は10MB|
 |6|表示順|display_order|TINYINT|||○||1|連絡帳の中での画像の並び順（1〜5）|
 |7|作成日時|created_at|DATETIME|||○|||共通：監査項目|
 |8|作成者|created_by|VARCHAR(29)|||○|||共通：監査項目|
@@ -581,7 +580,7 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 
 ## handover_notes（連携事項）
 
-保育士同士の申し送り（例：「園庭で遊んでいてけがをしました。保護者への連携をお願いします」）。公開版ではテストデータで作成し、トップに表示するだけ。作成・編集・削除の画面とAPIは追加要件（ADR-93）。閲覧できるのは、対象の園児を見られる人（`ChildScope`）だけ。
+保育士同士の申し送り（例：「園庭で遊んでいてけがをしました。保護者への連携をお願いします」）。公開版ではテストデータで作成し、トップに表示するだけ。作成・編集・削除の画面とAPIは追加要件。閲覧できるのは、対象の園児を見られる人（`ChildScope`）だけ。
 
 |No|論理名|物理名|型|PK|FK|NN|UQ|デフォルト値|備考|
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|---|
@@ -589,10 +588,10 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 |2|園ID|nursery_id|CHAR(29)|||○|||参照先：nursery.nurseries.nursery_id（外部キーなし：モジュール外）。閲覧範囲の条件に使う|
 |3|園児ID|child_id|CHAR(29)|||○|||参照先：nursery.children.child_id（外部キーなし：モジュール外）|
 |4|作成保育士ID|author_teacher_id|CHAR(29)|||○|||参照先：nursery.teachers.teacher_id（外部キーなし：モジュール外）。編集・削除（追加要件）で本人の判定に使う|
-|5|作成保育士名|author_name|VARCHAR(100)|||○|||スナップショット（ADR-45）|
+|5|作成保育士名|author_name|VARCHAR(100)|||○|||スナップショット|
 |6|園児名|child_name|VARCHAR(100)|||○|||スナップショット|
 |7|本文|content|VARCHAR(500)|||○||||
-|8|作成日時|created_at|DATETIME(3)|||○|||共通：監査項目。**このテーブルだけミリ秒まで持ち、作成の新しい順に厳密に並べる**（ADR-81の例外。ADR-93）|
+|8|作成日時|created_at|DATETIME(3)|||○|||共通：監査項目。**このテーブルだけミリ秒まで持ち、作成の新しい順に厳密に並べる**（日時を秒までとする共通ルールの例外）|
 |9|作成者|created_by|VARCHAR(29)|||○|||共通：監査項目|
 |10|更新日時|updated_at|DATETIME|||○|||共通：監査項目|
 |11|更新者|updated_by|VARCHAR(29)|||○|||共通：監査項目|
@@ -611,16 +610,16 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 
 | テーブル | 理由 |
 |---|---|
-| 保育士連絡帳・保護者連絡帳の編集履歴 | 編集履歴は追加要件（ADR-54） |
-| 既読サマリー | 既読は追加要件（ADR-54） |
-| 下書き | 下書きは追加要件（ADR-38） |
+| 保育士連絡帳・保護者連絡帳の編集履歴 | 編集履歴は追加要件 |
+| 既読サマリー | 既読は追加要件 |
+| 下書き | 下書きは追加要件 |
 | 保護者のパスワード・リフレッシュトークン | 保護者のログインは追加要件。保護者のアカウントも `credentials` を使う |
 
 # 第2版の変更点
 
 | # | 変更 | 理由 |
 |---|---|---|
-| 1 | 日時を `DATETIME(3)` から `DATETIME`（秒まで）に | ミリ秒までの順番が必要な箇所がない（パスワード履歴は世代番号、作成順はULIDで分かる）（論点X） |
+| 1 | 日時を `DATETIME(3)` から `DATETIME`（秒まで）に | ミリ秒までの順番が必要な箇所がない（パスワード履歴は世代番号、作成順はULIDで分かる） |
 | 2 | 選択肢をJavaの `enum`＋DBは文字（`VARCHAR(20)`）に。値を一覧にまとめた | 変更容易性（値の追加・並べ替えでDBを変えずに済む）（第3版） |
 | 3 | `permissions` を `mst_permissions`（権限マスタ）に。監査項目を外した | Flywayで投入する全園共通の固定データのため |
 | 4 | 論理名を日本語にそろえた（例：User ID → ユーザーID） | 論理名と物理名の区別 |
@@ -630,15 +629,15 @@ Opaque Token。DBにはハッシュ値だけを保存する（ADR-35）。
 | 8 | `password_histories` に世代番号を追加 | 世代番号の大きい順に5件と比べる |
 | 9 | `role_permissions`・`class_assignments` に更新日時・更新者を追加 | 監査項目の統一 |
 | 10 | 連絡帳の項目を画面の項目と順番に合わせた。保護者連絡帳は夜・朝に変更。機嫌の列を追加・整理。コメントの名前を修正 | 画面の項目との一致 |
-| 11 | 連絡帳のコメントを `TEXT` から `VARCHAR`（200文字・1,000文字）に | 上限がないと表示の崩れや大量の入力を防げない（ADR-85） |
+| 11 | 連絡帳のコメントを `TEXT` から `VARCHAR`（200文字・1,000文字）に | 上限がないと表示の崩れや大量の入力を防げない |
 | 12 | 画像の表示順を `TINYINT` に。最大5枚を明記 | 1連絡帳あたり最大5枚 |
-| 13 | `children.main_parent_id` を必須に | メイン保護者がいないと、将来の保護者アプリで園児の閲覧権限を設定する人がいなくなる（第3版、論点Z） |
-| 14 | 園コード（`nursery_code`）は持たない | 用途が出たら追加する（ADR-49）。MySQL 8.0の列の追加はINSTANT方式で一瞬で終わる。追加要件に記載（第3版、論点Y） |
+| 13 | `children.main_parent_id` を必須に | メイン保護者がいないと、将来の保護者アプリで園児の閲覧権限を設定する人がいなくなる（第3版） |
+| 14 | 園コード（`nursery_code`）は持たない | 用途が出たら追加する。MySQL 8.0の列の追加はINSTANT方式で一瞬で終わる。追加要件に記載（第3版） |
 
 # 追加要件（テーブルに関係するもの）
 
 | 内容 | 備考 |
 |---|---|
-| 園コード（`nurseries.nursery_code`） | 契約時の入力、問い合わせ時の本人確認など、人が使う用途が出たら追加（ADR-49） |
-| 連携事項の作成・編集・削除 | 公開版は表示だけ（テストデータ）。時間が余れば公開前でも着手（ADR-93） |
-| 15 | 連携事項（`handover_notes`）を追加。作成日時だけ `DATETIME(3)` | トップに表示（公開版はテストデータ）。作成順に厳密に並べるため（ADR-93） |
+| 園コード（`nurseries.nursery_code`） | 契約時の入力、問い合わせ時の本人確認など、人が使う用途が出たら追加 |
+| 連携事項の作成・編集・削除 | 公開版は表示だけ（テストデータ）。時間が余れば公開前でも着手 |
+| 15 | 連携事項（`handover_notes`）を追加。作成日時だけ `DATETIME(3)` | トップに表示（公開版はテストデータ）。作成順に厳密に並べるため |
