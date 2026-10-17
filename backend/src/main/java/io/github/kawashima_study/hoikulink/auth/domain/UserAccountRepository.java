@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
- * アカウントの保存と読み出しの約束
+ * アカウントの保存と読み出しのインターフェース
  * <p>DBの読み書きの方法（jOOQ）は知らず メソッドの形だけを決める
  * <p>実装はadapterの中に置く
  */

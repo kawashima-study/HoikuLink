@@ -179,7 +179,7 @@ stateDiagram-v2
 
 | No. | 種類 | 名前・置き場所 | 備考 |
 |---:|---|---|---|
-| 1 | インターフェース | `UserAccountRepository`（`auth.domain`） | 保存と読み出しの約束のみを持つ。 |
+| 1 | インターフェース | `UserAccountRepository`（`auth.domain`） | 保存と読み出しのメソッドの定義のみを持つ。 |
 | 2 | 実装 | `auth.adapter.out.persistence` | jOOQでDBを読み書きする。 |
 
 ### 9-2. メソッド定義
