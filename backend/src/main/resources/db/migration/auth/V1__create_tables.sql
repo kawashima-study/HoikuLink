@@ -1,5 +1,5 @@
 -- 認証モジュールのテーブル
--- 日時はUTC（DATETIME、秒まで）。論理削除とユニーク制約は active_flag（生成列）で両立する
+-- 日時は日本時間（DATETIME、秒まで）論理削除とユニーク制約は active_flag（生成列）で両立する
 
 -- アカウント
 CREATE TABLE `auth`.`credentials` (
