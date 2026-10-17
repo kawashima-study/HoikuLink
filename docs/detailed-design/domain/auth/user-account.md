@@ -2,11 +2,10 @@
 
 | 項目 | 内容 |
 |---|---|
-| 状態 | 確定 |
-| 版 | 1.0（初版） |
+| 状態 | 作成中 |
 | モジュール | 認証 |
 | パッケージ | `io.github.kawashima_study.hoikulink.auth.domain` |
-| 対象範囲 | ユーザーID、メールアドレス、パスワードハッシュ、ログイン失敗とアカウントロック |
+| 対象範囲 | ユーザーID、メールアドレス、パスワードハッシュ、ログイン失敗とアカウントロック、パスワードの照合 |
 
 ## 1. 概要
 
@@ -31,6 +30,8 @@ UserAccount（アカウント）
 | 5 | `AuthErrorCode` | 列挙型（`ErrorCode` を実装） | 認証モジュールのエラーコードの一覧。 |
 | 6 | `InvalidEmailAddressException` | 例外（`ApplicationException` を継承） | メールアドレスの長さ・形式の誤り。 |
 | 7 | `SelfUnlockNotAllowedException` | 例外（`ApplicationException` を継承） | 自分自身のロックの解除。 |
+| 8 | `RawPassword` | Value Object | 入力されたパスワード（ハッシュ値にする前の文字列）。 |
+| 9 | `PasswordVerifier` | インターフェース | 入力されたパスワードとパスワードのハッシュ値の照合。実装は `auth.adapter.out.crypto` に置き、Argon2id（メモリ12MiB・反復3回・並列度1）で照合する。 |
 
 ## 3. 属性定義
 
@@ -63,6 +64,12 @@ UserAccount（アカウント）
 | 2 | `lockedAt` | `Instant` | | ロック中のみ値があること。 | ロックした日時。 |
 | 3 | `unlockedAt` | `Instant` | | `unlockedBy` と、両方とも値がないか、両方とも値があること。 | 最後に解除した日時。 |
 | 4 | `unlockedBy` | `UserId` | | `unlockedAt` と、両方とも値がないか、両方とも値があること。 | 最後に解除した園長・主任のユーザーID。 |
+
+### 3-5. RawPassword
+
+| No. | 項目名 | 型 | 必須 | 制約 | 備考 |
+|---:|---|---|:---:|---|---|
+| 1 | `value` | `String` | ○ | | 入力されたパスワード。長さ・文字の種類は確認しない（ルールを変えた場合に、変更前のパスワードでログインできなくなるため）。 |
 
 ## 4. メソッド定義
 
@@ -107,6 +114,21 @@ UserAccount（アカウント）
 | 8 | `lockedAt` | なし | `Optional<Instant>` | | ロック日時を返す。値がない場合は空を返す。 |
 | 9 | `unlockedAt` | なし | `Optional<Instant>` | | 解除日時を返す。値がない場合は空を返す。 |
 | 10 | `unlockedBy` | なし | `Optional<UserId>` | | 解除者を返す。値がない場合は空を返す。 |
+
+### 4-5. RawPassword
+
+| No. | メソッド名 | 引数 | 戻り値 | 例外 | 処理概要 |
+|---:|---|---|---|---|---|
+| 1 | コンストラクタ | `String` | | `NullPointerException`（`null`） | 値を確認する。 |
+| 2 | `value` | なし | `String` | | 値を返す。 |
+| 3 | `toString` | なし | `String` | | 中身を隠した文字列を返す（例：`RawPassword[***]`）。 |
+
+### 4-6. PasswordVerifier
+
+| No. | メソッド名 | 引数 | 戻り値 | 例外 | 処理概要 |
+|---:|---|---|---|---|---|
+| 1 | `matches` | `RawPassword`、`PasswordHash` | `boolean` | | 入力されたパスワードがハッシュ値と一致する場合 `true` を返す。 |
+| 2 | `matchesDummy` | `RawPassword` | `boolean` | | ダミーのハッシュ値で照合し、常に `false` を返す。アカウントがない場合に、照合の処理時間をそろえるために使う。 |
 
 ## 5. 業務ルール（不変条件）
 
@@ -205,7 +227,7 @@ stateDiagram-v2
 
 | No. | 対象 | 内容 |
 |---:|---|---|
-| 1 | `EmailAddress`・`PasswordHash` の `toString` | 中身を出力しない。 |
+| 1 | `EmailAddress`・`PasswordHash`・`RawPassword` の `toString` | 中身を出力しない。 |
 
 ## 11. 改訂履歴
 
