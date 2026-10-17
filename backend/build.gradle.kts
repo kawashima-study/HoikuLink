@@ -60,6 +60,9 @@ dependencies {
     // セキュリティ
     implementation("org.springframework.boot:spring-boot-starter-security")
 
+    // パスワードのハッシュ値の計算（Argon2id）に使う暗号の部品（Spring Bootが版を管理していないため版を書く）
+    implementation("org.bouncycastle:bcprov-jdk18on:1.86")
+
     // DB
     implementation("org.springframework.boot:spring-boot-starter-jooq")
     implementation("org.springframework.boot:spring-boot-starter-flyway")
