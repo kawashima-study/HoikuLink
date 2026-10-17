@@ -12,7 +12,7 @@ import org.testcontainers.utility.MountableFile;
  * テストで使用するコンテナ（MySQLとValkey）の設定
  */
 @TestConfiguration(proxyBeanMethods = false)
-class TestcontainersConfiguration {
+public class TestcontainersConfiguration {
 
     /**
      * 手元と同じ設定のMySQLのコンテナを作成
