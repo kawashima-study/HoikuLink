@@ -5,20 +5,20 @@
 | 状態 | 作成中 |
 | 機能ID | API-A-001 |
 | モジュール | 認証 |
-| 関連する設計書 | ドメイン詳細設計書（`domain/auth/user-account.md`）、テーブル定義（`auth.credentials`、`auth.refresh_tokens`） |
+| 関連する設計書 | ドメイン詳細設計書（`domain/auth/user-account.md`・`domain/auth/token.md`）、テーブル定義（`auth.credentials`、`auth.refresh_tokens`） |
 
 ## 1. 機能概要
 
-保育士がメールアドレスとパスワードでログインする。成功した場合は、Access Token（JWT）を応答の本文で返し、Refresh TokenをCookieに設定する。
+保育士がメールアドレスとパスワードでログインし、成功した場合はAccess Token（JWT）を応答の本文で返し、Refresh TokenをCookieに設定する。
 
-5回連続でログインに失敗したアカウントはロックする。失敗した場合の応答では、アカウントの有無を区別しない。
+<p>5回連続でログインに失敗したアカウントはロックし、失敗した場合の応答ではアカウントの有無を区別しない。
 
 ## 2. 権限制御
 
 | No. | 項目 | 内容 |
 |---|---|---|
 | 1 | ログインの要否 | 不要（未ログインで呼び出す） |
-| 2 | 呼び出しの回数の制限 | WAFで、同じIPアドレスから5分間に100回までとする。 |
+| 2 | 呼び出しの回数の制限 | WAFで同じIPアドレスから5分間に100回までとする。 |
 
 ## 3. HTTPメソッド・エンドポイント
 
@@ -50,7 +50,7 @@
 
 | No. | 項目名 | 内容 |
 |---:|---|---|
-| 1 | `Set-Cookie` | Refresh Token。名前は `refresh_token`。属性は `HttpOnly`・`Secure`・`SameSite=Strict`・`Path=/api/v1/auth`、有効期限はログインから12時間 |
+| 1 | `Set-Cookie` | Refresh Token<br>名前：`refresh_token`<br>属性： `HttpOnly`・`Secure`・`SameSite=Strict`・`Path=/api/v1/auth`<br>有効期限はログインから12時間 |
 
 **ボディ**
 
@@ -75,11 +75,27 @@ RFC 9457の形式（`type`・`title`・`status`・`detail`・`code`・`requestId
 | 5 | ロック中の場合 | 照合の結果にかかわらず失敗回数とロックの状態は変えない。パスワードが正しい場合はロック中であることを、正しくない場合はログインの失敗を応答する。 |
 | 6 | パスワードが正しくない場合 | `UserAccount.recordLoginFailure` で失敗を記録し、`UserAccountRepository.update` で書き込む。ログインの失敗として応答する。 |
 | 7 | パスワードが正しい場合 | `UserAccount.recordLoginSuccess` で失敗回数を0に戻し、`UserAccountRepository.update` で書き込む。 |
-| 8 | トークンの発行 | Access Token（JWT）を発行する。Refresh Tokenを発行し、ハッシュ値（SHA-256）を `auth.refresh_tokens` に保存する。 |
+| 8 | トークンの発行 | `AccessTokenIssuer.issue` でAccess Token（JWT）を発行する。`RefreshTokenGenerator.generate` で生のRefresh Tokenを作り、`RefreshTokenHash.of` でハッシュ値（SHA-256）にして、`RefreshToken.issue` で作成する。`RefreshTokenRepository.save` で `auth.refresh_tokens` に保存する。 |
 | 9 | 応答 | 5-1のとおり返す。 |
 
-- ログインのユースケースは例外を投げず、成功・失敗・ロック中を表す結果を返す。APIの側で、結果を応答に変換する。
-- 書き込みの更新者はアカウント自身のユーザーIDとする。
+- ログインのユースケースは例外を投げず、成功・失敗・ロック中を表す結果を返す。APIの側で結果を応答に変換する。
+- 書き込みの更新者・作成者はアカウント自身のユーザーIDとする。日時は `Clock` から取得。
+- No.1のうち、必須の確認はAPIにて行う。メールアドレスの長さ・形式の確認はユースケースの中で `EmailAddress` を作るときに行う（書き込みの前のため、例外で取り消される書き込みはない）。
+
+### 6-1. ユースケースの構成
+
+| No. | 名前 | 種類 | 置き場所 | 内容 |
+|---:|---|---|---|---|
+| 1 | `LoginUseCase` | インターフェース | `auth.application` | ログインのユースケースの入口。APIの側はこのインターフェースだけを使う。メソッドは `login(LoginCommand)` で、`LoginResult` を返す。 |
+| 2 | `LoginService` | クラス（`LoginUseCase` の実装） | `auth.application` | 処理フローNo.2〜8を行う。メソッドに `@Transactional` を付ける。 |
+| 3 | `LoginCommand` | record | `auth.application` | 入力。`email`（文字列）・`password`（文字列）。ユースケースの中で `EmailAddress`・`RawPassword` に変える。 |
+| 4 | `LoginResult` | sealed interface | `auth.application` | 結果。次の3種類のrecordのいずれか。 |
+
+| No. | 結果の種類 | 持つ値 | 条件 | APIの応答 |
+|---:|---|---|---|---|
+| 1 | `LoginResult.Success` | `AccessToken`、`RawRefreshToken`、`Instant`（Refresh Tokenの有効期限） | パスワードが正しく、ロック中でない | 200（5-1） |
+| 2 | `LoginResult.InvalidCredentials` | なし | アカウントがない、またはパスワードが正しくない | 401 `INVALID_CREDENTIALS` |
+| 3 | `LoginResult.AccountLocked` | なし | ロック中でパスワードが正しい | 401 `ACCOUNT_LOCKED` |
 
 ## 7. バリデーションチェック
 
