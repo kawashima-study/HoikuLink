@@ -11,7 +11,13 @@ public enum AuthErrorCode implements ErrorCode {
     INVALID_EMAIL_ADDRESS("メールアドレスの形式が正しくありません。"),
 
     /** ロック解除を自分自身で行う */
-    SELF_UNLOCK_NOT_ALLOWED("自分のアカウントのロックは解除できません。");
+    SELF_UNLOCK_NOT_ALLOWED("自分のアカウントのロックは解除できません。"),
+
+    /** ログインの失敗（アカウントがないまたはパスワードが正しくない） */
+    INVALID_CREDENTIALS("メールアドレスまたはパスワードが正しくありません。"),
+
+    /** ロック中のアカウントでのログイン（パスワードが正しい場合） */
+    ACCOUNT_LOCKED("アカウントがロックされています。");
 
     /** 画面に表示できるエラーの種類の短い説明 */
     private final String title;
