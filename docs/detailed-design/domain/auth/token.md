@@ -28,7 +28,7 @@ Refresh TokenはOpaque Token（乱数の文字列）とし、DBにはハッシ�
 | 4 | `RefreshTokenHash` | Value Object | Refresh Tokenのハッシュ値（SHA-256）。 |
 | 5 | `AccessToken` | Value Object | Access Token（JWT）と有効期限までの時間。 |
 | 6 | `RefreshTokenGenerator` | インターフェース | 生のRefresh Tokenの作成。実装は `auth.adapter.out.crypto` に置き、`SecureRandom` で作る32バイトの乱数をBase64URLにした文字列とする。 |
-| 7 | `AccessTokenIssuer` | インターフェース | Access Tokenの発行。実装はadapterに置く。 |
+| 7 | `AccessTokenIssuer` | インターフェース | Access Tokenの発行。実装は `auth.adapter.out.crypto` に置き、Spring Securityの `NimbusJwtEncoder` でHS256の署名をする。見出しに `kid`、中身に `iss`・`sub`（ユーザーID）・`iat`・`exp`（5分）・`jti`（乱数のUUID）を入れる。署名の鍵（Base64、32バイト以上）は環境変数 `HOIKULINK_JWT_SECRET` から読む。 |
 
 ## 3. 属性定義
 
@@ -82,7 +82,7 @@ Refresh TokenはOpaque Token（乱数の文字列）とし、DBにはハッシ�
 
 | No. | メソッド名 | 引数 | 戻り値 | 例外 | 処理概要 |
 |---:|---|---|---|---|---|
-| 1 | コンストラクタ | `String` | | `NullPointerException`（`null`）、`IllegalArgumentException`（形式の誤り） | 値を確認する。 |
+| 1 | コンストラクタ | `String` | | `NullPointerException`（`null`）、`InvalidIdException`（形式の誤り、またはプレフィックスが `RTK` でない） | 値を確認する。 |
 | 2 | `newId` | なし | `RefreshTokenId` | | 新しいIDを作成する。 |
 | 3 | `value` | なし | `String` | | 値を返す。 |
 
@@ -135,7 +135,8 @@ Refresh TokenはOpaque Token（乱数の文字列）とし、DBにはハッシ�
 | No. | 例外クラス | エラーコード | 発生条件 |
 |---:|---|---|---|
 | 1 | `NullPointerException` | ― | いずれかの値に `null` が渡された（プログラムの誤り）。 |
-| 2 | `IllegalArgumentException` | ― | リフレッシュトークンID・ハッシュ値の形式が誤っている（プログラム、または保存データの誤り）。 |
+| 2 | `InvalidIdException`（`IllegalArgumentException` を継承） | ― | リフレッシュトークンIDの形式が誤っている、またはプレフィックスが `RTK` でない（`PrefixedUlid` のルール）。 |
+| 3 | `IllegalArgumentException` | ― | ハッシュ値の形式が誤っている（プログラム、または保存データの誤り）。 |
 
 ## 7. テーブル対応
 
