@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import io.github.kawashima_study.hoikulink.TestcontainersConfiguration;
 import io.github.kawashima_study.hoikulink.shared.UserId;
 import io.github.kawashima_study.hoikulink.shared.web.RequestIdFilter;
+import jakarta.servlet.Filter;
 import java.time.LocalDateTime;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -73,7 +74,9 @@ class LoginControllerTests {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context)
-                .addFilters(context.getBean(RequestIdFilter.class)) // エラー応答のrequestIdを付けるため本番と同じフィルターを通す
+                .addFilters(
+                        context.getBean(RequestIdFilter.class),
+                        context.getBean("springSecurityFilterChain", Filter.class))
                 .build();
     }
 

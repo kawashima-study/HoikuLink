@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import io.github.kawashima_study.hoikulink.TestcontainersConfiguration;
 import io.github.kawashima_study.hoikulink.shared.web.RequestIdFilter;
+import jakarta.servlet.Filter;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,7 +53,9 @@ class LogoutControllerTests {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context)
-                .addFilters(context.getBean(RequestIdFilter.class))
+                .addFilters(
+                        context.getBean(RequestIdFilter.class),
+                        context.getBean("springSecurityFilterChain", Filter.class))
                 .build();
         support = new AuthApiTestSupport(dsl, mockMvc);
     }
