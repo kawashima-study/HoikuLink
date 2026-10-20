@@ -62,6 +62,7 @@ dependencies {
 
     // パスワードのハッシュ値の計算（Argon2id）に使う暗号の部品（Spring Bootが版を管理していないため版を書く）
     implementation("org.bouncycastle:bcprov-jdk18on:1.86")
+    implementation("org.springframework.security:spring-security-oauth2-jose")
 
     // DB
     implementation("org.springframework.boot:spring-boot-starter-jooq")
