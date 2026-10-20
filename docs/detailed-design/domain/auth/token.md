@@ -74,9 +74,13 @@ Refresh TokenはOpaque Token（乱数の文字列）とし、DBにはハッシ�
 
 | No. | メソッド名 | 引数 | 戻り値 | 例外 | 処理概要 |
 |---:|---|---|---|---|---|
-| 1 | `issue` | `UserId`、`RefreshTokenHash`、`Instant`（発行日時） | `RefreshToken` | `NullPointerException`（いずれかの引数が `null`） | 新しいリフレッシュトークンIDを作り、トークンファミリーIDを同じ値にする。有効期限は発行日時の12時間後とし、無効化日時は値なしとする。 |
-| 2 | `refreshTokenId`、`userId`、`tokenHash`、`familyId`、`expiresAt` | なし | 各項目の型 | | 各項目の値を返す。 |
-| 3 | `revokedAt` | なし | `Optional<Instant>` | | 無効化日時を返す。値がない場合は空を返す。 |
+| 1 | コンストラクタ | `RefreshTokenId`、`UserId`、`RefreshTokenHash`、`RefreshTokenId`（トークンファミリーID）、`Instant`（有効期限）、`Instant`（無効化日時） | | `NullPointerException`（無効化日時以外が `null`） | 保存されている値から作成する。新しく発行する場合は `issue` を使う。 |
+| 2 | `issue` | `UserId`、`RefreshTokenHash`、`Instant`（発行日時） | `RefreshToken` | `NullPointerException`（いずれかの引数が `null`） | 新しいリフレッシュトークンIDを作り、トークンファミリーIDを同じ値にする。有効期限は発行日時の12時間後とし、無効化日時は値なしとする。 |
+| 3 | `rotate` | `RefreshTokenHash`（新しいトークンのハッシュ値）、`Instant`（交換日時） | `RefreshToken` | `IllegalStateException`（無効化済み、または有効期限切れ）、`NullPointerException`（交換日時が `null`） | このトークンの無効化日時を交換日時にし、同じトークンファミリーIDと同じ有効期限の新しいトークンを返す。 |
+| 4 | `isUsable` | `Instant`（現在の時刻） | `boolean` | | 無効化されておらず、現在の時刻が有効期限より前の場合 `true` を返す。 |
+| 5 | `isRevoked` | なし | `boolean` | | 無効化日時がある場合 `true` を返す。 |
+| 6 | `refreshTokenId`、`userId`、`tokenHash`、`familyId`、`expiresAt` | なし | 各項目の型 | | 各項目の値を返す。 |
+| 7 | `revokedAt` | なし | `Optional<Instant>` | | 無効化日時を返す。値がない場合は空を返す。 |
 
 ### 4-2. RefreshTokenId
 
@@ -129,6 +133,9 @@ Refresh TokenはOpaque Token（乱数の文字列）とし、DBにはハッシ�
 | 1 | Refresh Tokenの有効期限は、発行日時の12時間後とする。 | `RefreshToken.issue` | ― |
 | 2 | ログインで発行したRefresh TokenのトークンファミリーIDは、そのトークン自身のIDとする。 | `RefreshToken.issue` | ― |
 | 3 | DBには生のRefresh Tokenを保存せず、ハッシュ値だけを保存する。 | `RefreshToken`（生のトークンを持たない） | ― |
+| 4 | 交換すると元のトークンを無効化し、新しいトークンは同じトークンファミリーIDと同じ有効期限を引き継ぐ（延長しない）。 | `RefreshToken.rotate` | ― |
+| 5 | 無効化済みまたは有効期限切れのトークンは交換できない。 | `RefreshToken.rotate` | `IllegalStateException` |
+| 6 | 無効化済みのトークンが使われた場合は、同じトークンファミリーのトークンをすべて無効化する。 | 再発行のユースケース（`RefreshService`）、`RefreshTokenRepository.revokeFamily` | ― |
 
 ## 6. 例外定義
 
@@ -157,14 +164,17 @@ Refresh TokenはOpaque Token（乱数の文字列）とし、DBにはハッシ�
 
 | No. | 種類 | 名前・置き場所 | 備考 |
 |---:|---|---|---|
-| 1 | インターフェース | `RefreshTokenRepository`（`auth.domain`） | 保存のメソッドの定義のみを持つ。 |
-| 2 | 実装 | `auth.adapter.out.persistence` | jOOQでDBに書き込む。 |
+| 1 | インターフェース | `RefreshTokenRepository`（`auth.domain`） | 保存と読み出しのメソッドの定義のみを持つ。 |
+| 2 | 実装 | `auth.adapter.out.persistence` | jOOQでDBを読み書きする。 |
 
 ### 8-2. メソッド定義
 
 | No. | メソッド名 | 引数 | 戻り値 | 処理概要 |
 |---:|---|---|---|---|
 | 1 | `save` | `RefreshToken`、`UserId`（作成者）、`Instant`（作成日時） | なし | リフレッシュトークンを新しく登録する。作成者・更新者に作成者、作成日時・更新日時に作成日時を入れる。 |
+| 2 | `findByHashForUpdate` | `RefreshTokenHash` | `Optional<RefreshToken>` | ハッシュ値でトークンを探し、その行をロックする。見つからない場合は空を返す。 |
+| 3 | `update` | `RefreshToken`、`UserId`（更新者）、`Instant`（更新日時） | なし | 無効化日時・更新日時・更新者を書き込む。書き換える行がない場合は `IllegalStateException`。 |
+| 4 | `revokeFamily` | `RefreshTokenId`（トークンファミリーID）、`UserId`（更新者）、`Instant`（無効化日時） | なし | 同じトークンファミリーのまだ無効化されていない行をすべて無効化する。無効化済みの行の無効化日時は変えない。 |
 
 ### 8-3. 処理の決まり
 
