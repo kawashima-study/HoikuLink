@@ -6,14 +6,21 @@
 
 ## ステータス
 
-開発中（2026年11月12日公開予定）
+開発中（機能ごとに、API・画面・テストまで終えてから次の機能に進めています）
 
 ## ドキュメント
 
-- [テーブル定義](docs/detailed-design/database/table-design.md)
-- [ER図](docs/basic-design/08_database-overview.md)
-- [API一覧](docs/basic-design/07_api-list.md)
+### 基本設計
+
 - [画面一覧](docs/basic-design/04_screen-list.md)
+- [API一覧](docs/basic-design/07_api-list.md)
+- [ER図](docs/basic-design/08_database-overview.md)
+
+### 詳細設計
+
+- [テーブル定義](docs/detailed-design/database/table-design.md)
+- [ドメイン：アカウント（認証）](docs/detailed-design/domain/auth/user-account.md)
+- [API：ログイン](docs/detailed-design/api/auth/login.md)
 
 ## 技術スタック（予定）
 

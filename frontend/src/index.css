@@ -1,0 +1,72 @@
+/* 画面全体の見た目（最低限） */
+:root {
+  font-family: system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  color: #1f2933;
+  background-color: #f7f5f0;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 360px;
+  margin: 80px auto;
+  padding: 32px 24px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+  margin: 0 0 24px;
+  font-size: 24px;
+  text-align: center;
+  color: #2f6f4e;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+label {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+input {
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid #c8ccd0;
+  border-radius: 8px;
+}
+
+button {
+  margin-top: 16px;
+  padding: 12px;
+  font-size: 16px;
+  color: #ffffff;
+  background-color: #2f6f4e;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #9bb8a8;
+  cursor: default;
+}
+
+.error {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: #b42318;
+}
+
+.note,
+.loading {
+  font-size: 14px;
+  color: #616e7c;
+}

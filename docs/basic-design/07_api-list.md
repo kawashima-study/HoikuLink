@@ -1,26 +1,26 @@
 # API一覧（公開版・修正版 第3版）
 
 - 作成日：2026-10-07
-- 第3版の変更：URLにバージョン（`/api/v1`）を付けた（論点C3）。HTTPステータスの使い分けと、エラーの形式の詳細を追加（論点C1）。トップに連携事項を表示（ADR-93）
-- 第2版の変更：連絡帳の検索を、保育士連絡帳・保護者連絡帳の両方を1つのAPIで検索する形に変更。エラーの形式（論点T：T1）とページング（論点U：U1）を確定
+- 第3版の変更：URLにバージョン（`/api/v1`）を付けた。HTTPステータスの使い分けと、エラーの形式の詳細を追加。トップに連携事項を表示
+- 第2版の変更：連絡帳の検索を、保育士連絡帳・保護者連絡帳の両方を1つのAPIで検索する形に変更。エラーの形式とページングを確定
 
 ## 共通ルール
 
 | 項目 | ルール |
 |---|---|
-| URLの入口 | 認証：`/api/v1/auth/...`、保育士Web：`/api/v1/teacher/...`、保護者アプリ（将来）：`/api/v1/parent/...`（ADR-83） |
-| バージョン | URLに `v1` を含める。互換性のない変更をするときは `v2` を並べて出す（ADR-83） |
+| URLの入口 | 認証：`/api/v1/auth/...`、保育士Web：`/api/v1/teacher/...`、保護者アプリ（将来）：`/api/v1/parent/...` |
+| バージョン | URLに `v1` を含める。互換性のない変更をするときは `v2` を並べて出す |
 | URLの書き方 | リソースを名詞で表し、動詞を入れない（例：`/api/v1/teacher/teacher-diaries`）。操作はHTTPメソッドで表す（取得：GET、作成：POST、更新：PUT、部分更新：PATCH、削除：DELETE） |
 | 個人情報 | 氏名などの個人情報をURLやクエリパラメータに含めない。検索の条件は `POST .../search` の本文で送る（URLはログやブラウザの履歴に残るため） |
-| 確認の順番 | HTTP・JSONの形式 → 認証（JWT） → ユーザーの特定 → `X-Nursery-Id` → 園の状態（閉園なら拒否） → 所属・権限・閲覧範囲 → 業務処理。JWTが有効でも、選択中の園が使えるとは限らない（ADR-69、ADR-78） |
+| 確認の順番 | HTTP・JSONの形式 → 認証（JWT） → ユーザーの特定 → `X-Nursery-Id` → 園の状態（閉園なら拒否） → 所属・権限・閲覧範囲 → 業務処理。JWTが有効でも、選択中の園が使えるとは限らない |
 | 認証 | ログイン・Access Tokenの再発行以外は `Authorization: Bearer <Access Token>` が必須 |
-| 選択中の園 | `/api/v1/teacher/...` は `X-Nursery-Id` ヘッダーが必須（選択できる園の一覧の取得を除く）。サーバーが所属を確認する（ADR-41） |
-| 全APIの共通の確認 | 園運営のSpring Securityのフィルターで、所属・閉園・退職・無操作15分・初期パスワードを確認する（ADR-78） |
-| CSRF | Access Tokenの再発行・ログアウトは、独自ヘッダーとOriginヘッダーも確認する（ADR-36） |
+| 選択中の園 | `/api/v1/teacher/...` は `X-Nursery-Id` ヘッダーが必須（選択できる園の一覧の取得を除く）。サーバーが所属を確認する |
+| 全APIの共通の確認 | 園運営のSpring Securityのフィルターで、所属・閉園・退職・無操作15分・初期パスワードを確認する |
+| CSRF | Access Tokenの再発行・ログアウトは、独自ヘッダーとOriginヘッダーも確認する |
 | 楽観的ロック | 更新（`PUT`）と画像の追加・削除は、読み込んだときの `version` を送る。食い違ったら409 |
 | 名簿の外のID | 404（存在しないものとして扱う。3-6）。URLの中のIDの形式が違う場合も404 |
-| エラーの形式 | RFC 9457（Problem Details）＋独自のエラーコード（下記。ADR-90）。HTTPメソッドやステータスによって形式を変えない |
-| ページング | 下記（ADR-91） |
+| エラーの形式 | RFC 9457（Problem Details）＋独自のエラーコード（下記）。HTTPメソッドやステータスによって形式を変えない |
+| ページング | 下記 |
 
 ### エラーの形式（RFC 9457 Problem Details）
 
@@ -62,7 +62,7 @@
 | 500 Internal Server Error | サーバー内部のエラー（詳細は返さない） | `INTERNAL_ERROR` |
 | 503 Service Unavailable | 一時的に使えない（Redisの障害時など） | `SERVICE_UNAVAILABLE` |
 
-ログイン失敗のメッセージは、アカウントの存在やロックの有無を区別しない（ADR-39）。
+ログイン失敗のメッセージは、アカウントの有無を区別しない。ロック中は、パスワードが正しい場合だけロックされていることを伝える（パスワードを知らない人には、アカウントの有無が分からない）。
 
 ### ページング（検索のAPI）
 
@@ -80,7 +80,7 @@
 |---|---|---|---|---|---|
 | API-A-001 | ログイン | メールアドレスとパスワードで認証し、Access Tokenを返す。Refresh TokenはHttpOnly Cookieで返す | POST | `/api/v1/auth/login` | 5回失敗でロック |
 | API-A-002 | Access Tokenの再発行 | Refresh Tokenを交換し、新しいAccess Tokenを返す | POST | `/api/v1/auth/refresh` | 使い回しを検知したらトークンファミリーごと無効化 |
-| API-A-003 | ログアウト | Refresh Tokenを無効化し、使用中のAccess Tokenを即時無効化する | POST | `/api/v1/auth/logout` | ADR-40 |
+| API-A-003 | ログアウト | Refresh Tokenを無効化し、使用中のAccess Tokenを即時無効化する | POST | `/api/v1/auth/logout` | 使用中のAccess TokenのID（jti）を、残りの有効期限の間Redisに登録して無効化する |
 | API-A-004 | パスワード変更 | 現在のパスワードを確認して変更する。初期パスワードの強制変更にも使う | PUT | `/api/v1/auth/password` | 過去5世代・漏洩照合・禁止パターン。変更後は全端末のRefresh Tokenを無効化 |
 
 ## 保育士Web
@@ -89,14 +89,14 @@
 |---|---|---|---|---|---|
 | API-T-001 | 選択できる園の一覧 | ログインした人が所属する園（閉園を除く）を返す | GET | `/api/v1/teacher/nurseries` | `X-Nursery-Id` 不要。1園だけなら画面で自動選択 |
 | API-T-002 | 状態の確認 | 25秒ごとのPolling。在籍状態・権限のバージョンを返す | GET | `/api/v1/teacher/session-status` | 401：ログイン画面へ、403：園の選択画面へ。無操作の時刻を更新しない |
-| API-T-003 | トップ情報取得 | 閲覧範囲の園児と最新の連絡帳を返す | GET | `/api/v1/teacher/top` | ViewableScope。見てよい園児の直近7日間の連携事項（新しい順）も返す（ADR-93） |
+| API-T-003 | トップ情報取得 | 閲覧範囲の園児と最新の連絡帳を返す | GET | `/api/v1/teacher/top` | ViewableScope。見てよい園児の直近7日間の連携事項（新しい順）も返す |
 | API-T-004 | 園児一覧取得 | 条件を指定して園児の一覧を返す | POST | `/api/v1/teacher/children/search` | ViewableScope |
-| API-T-005 | 連絡帳の検索 | 条件を指定して、保育士連絡帳・保護者連絡帳の両方を1つの一覧で返す。各行に種類（保育士／保護者）を含める | POST | `/api/v1/teacher/diaries/search` | 保育士連絡帳は `TeacherDiaryScope`、保護者連絡帳は `ParentDiaryScope` で絞る。ページングは共通ルール（ADR-89） |
+| API-T-005 | 連絡帳の検索 | 条件を指定して、保育士連絡帳・保護者連絡帳の両方を1つの一覧で返す。各行に種類（保育士／保護者）を含める | POST | `/api/v1/teacher/diaries/search` | 保育士連絡帳は `TeacherDiaryScope`、保護者連絡帳は `ParentDiaryScope` で絞る。ページングは共通ルール |
 | API-T-006 | 保育士連絡帳の詳細 | 指定した保育士連絡帳を返す。画像は30秒の署名付きURLを含める | GET | `/api/v1/teacher/teacher-diaries/{teacherDiaryId}` | 名簿の外は404 |
 | API-T-007 | 保育士連絡帳の作成 | 保育士連絡帳を作成する | POST | `/api/v1/teacher/teacher-diaries` | 1園児1日1件。スナップショットを保存 |
 | API-T-008 | 保育士連絡帳の編集 | 指定した保育士連絡帳を更新する | PUT | `/api/v1/teacher/teacher-diaries/{teacherDiaryId}` | `version` 必須。409で競合 |
 | API-T-009 | 保育士連絡帳の削除 | 指定した保育士連絡帳を削除する | DELETE | `/api/v1/teacher/teacher-diaries/{teacherDiaryId}` | `OWN`／`ALL` の権限 |
-| API-T-010 | 保育士連絡帳の画像追加 | 画像を受け取り、位置情報を除去してS3に保存する | POST | `/api/v1/teacher/teacher-diaries/{teacherDiaryId}/images` | multipart。サイズ・中身の検査（ADR-56）。1連絡帳5枚まで |
+| API-T-010 | 保育士連絡帳の画像追加 | 画像を受け取り、位置情報を除去してS3に保存する | POST | `/api/v1/teacher/teacher-diaries/{teacherDiaryId}/images` | multipart。サイズ・中身の検査。1連絡帳5枚まで |
 | API-T-011 | 保育士連絡帳の画像削除 | 指定した画像を削除する | DELETE | `/api/v1/teacher/teacher-diaries/{teacherDiaryId}/images/{imageId}` | 連絡帳の `version` が上がる |
 | API-T-013 | 保護者連絡帳の詳細 | 指定した保護者連絡帳を返す。画像は30秒の署名付きURLを含める | GET | `/api/v1/teacher/parent-diaries/{parentDiaryId}` | 名簿の外は404 |
 | API-T-014 | 保護者連絡帳の削除 | 指定した保護者連絡帳を削除する | DELETE | `/api/v1/teacher/parent-diaries/{parentDiaryId}` | `PARENT_DIARY_DELETE` |
@@ -111,11 +111,11 @@ API-T-012（保護者連絡帳の検索）は、第2版でAPI-T-005に統合し�
 | 版 | 元 | 修正 | 理由 |
 |---|---|---|---|
 | 第1版 | `/api/login`、`/api/logout` | `/api/v1/auth/...` | 認証の入口を分ける |
-| 第1版 | `/api/diaries`（保育士連絡帳と保護者連絡帳の区別なし） | 詳細・作成・編集・削除は `/api/v1/teacher/teacher-diaries`、`/api/v1/teacher/parent-diaries` に分ける | 論点O、ADR-04 |
+| 第1版 | `/api/diaries`（保育士連絡帳と保護者連絡帳の区別なし） | 詳細・作成・編集・削除は `/api/v1/teacher/teacher-diaries`、`/api/v1/teacher/parent-diaries` に分ける | 保育士連絡帳と保護者連絡帳は、扱う人と操作が違うため |
 | 第1版 | トップ情報取得（POST） | GET | 条件がなく、取得だけのため |
 | 第1版 | ― | Access Tokenの再発行、パスワード変更、園の一覧、状態の確認、画像、保護者連絡帳、ロック解除を追加 | 公開版の機能に必要 |
-| 第2版 | 保育士連絡帳の検索・保護者連絡帳の検索（2つ） | 連絡帳の検索（1つ）に統合 | 連絡帳一覧の画面で両方をまとめて検索するため（ADR-89） |
-| 第2版 | エラーの形式・ページングが未定 | RFC 9457、1ページ50件・最大40ページ | 論点T・U（ADR-90、ADR-91） |
-| 第3版 | `/api/auth/...`、`/api/teacher/...` | `/api/v1/auth/...`、`/api/v1/teacher/...` | 論点C3（ADR-83） |
-| 第3版 | ― | HTTPステータスの使い分け、URLの書き方、個人情報、確認の順番を追加 | 論点C1（ADR-90） |
-| 第3版 | トップ情報取得 | 連携事項も返す | ADR-93 |
+| 第2版 | 保育士連絡帳の検索・保護者連絡帳の検索（2つ） | 連絡帳の検索（1つ）に統合 | 連絡帳一覧の画面で両方をまとめて検索するため |
+| 第2版 | エラーの形式・ページングが未定 | RFC 9457、1ページ50件・最大40ページ | 画面とAPIで扱いをそろえるため |
+| 第3版 | `/api/auth/...`、`/api/teacher/...` | `/api/v1/auth/...`、`/api/v1/teacher/...` | 互換性のない変更のときに、新しい版を並べて出せるようにするため |
+| 第3版 | ― | HTTPステータスの使い分け、URLの書き方、個人情報、確認の順番を追加 | APIごとの扱いをそろえるため |
+| 第3版 | トップ情報取得 | 連携事項も返す | トップ画面で、保育士同士の申し送りを確認できるようにするため |
