@@ -7,8 +7,6 @@ import jakarta.validation.Valid;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import org.springframework.http.CacheControl;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,9 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/auth")
 class LoginController {
-
-    /** トークンの種類 */
-    private static final String TOKEN_TYPE = "Bearer";
 
     /** ログインのユースケース（実装のクラスではなくインターフェースで受け取る） */
     private final LoginUseCase loginUseCase;
@@ -52,32 +47,23 @@ class LoginController {
      * @throws AccountLockedException ロック中でパスワードが正しい場合（401）
      */
     @PostMapping("/login")
-    ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) { // @Validで入力のチェックをする（誤りは422）
+    ResponseEntity<AccessTokenResponse> login(@Valid @RequestBody LoginRequest request) { // @Validで入力のチェックをする（誤りは422）
         LoginResult result = loginUseCase.login(new LoginCommand(request.email(), request.password()));
         return switch (result) { // sealedのため結果の種類を増やして扱い漏れがあるとコンパイルエラーになる
-            case LoginResult.Success success -> ok(success);
+            case LoginResult.Success success ->
+                AccessTokenResponse.ok(success.accessToken(), success.refreshToken(), cookieMaxAge(success));
             case LoginResult.InvalidCredentials invalid -> throw new InvalidCredentialsException();
             case LoginResult.AccountLocked locked -> throw new AccountLockedException();
         };
     }
 
     /**
-     * ログインの成功の結果を応答に変換
+     * リフレッシュトークンのCookieの有効期間を計算
      *
      * @param success ログインの成功の結果
-     * @return 本文にアクセストークンを入れCookieにリフレッシュトークンを入れた応答
+     * @return 現在からリフレッシュトークンの有効期限までの時間
      */
-    private ResponseEntity<LoginResponse> ok(LoginResult.Success success) {
-        Duration maxAge = Duration.between(Instant.now(clock), success.refreshTokenExpiresAt());
-        LoginResponse body = new LoginResponse(
-                success.accessToken().value(),
-                TOKEN_TYPE,
-                success.accessToken().expiresIn().toSeconds());
-        return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        RefreshTokenCookie.of(success.refreshToken(), maxAge).toString())
-                .cacheControl(CacheControl.noStore()) // トークンを含む応答をブラウザや途中の機器に保存させない
-                .body(body);
+    private Duration cookieMaxAge(LoginResult.Success success) {
+        return Duration.between(Instant.now(clock), success.refreshTokenExpiresAt());
     }
 }
