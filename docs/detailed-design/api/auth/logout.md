@@ -11,7 +11,7 @@
 
 同じログイン（トークンファミリー）のリフレッシュトークンをすべて無効化し、ブラウザにCookieを削除させる。
 
-使用中のAccess TokenのID（`jti`）をValkeyに登録して即時に無効化する処理は、Access Tokenで守るAPIを作る②園の選択で作る（ADR-135）。それまでは、ログアウト後もAccess Tokenが有効期限（最長5分）まで残るが、守るAPIがないため影響はない。
+使用中のAccess TokenのID（`jti`）をValkeyに登録して即時に無効化する処理は未実装。現時点ではAccess Tokenで保護するAPIがないため、ログアウト後にAccess Tokenが有効期限（最長5分）まで残っても影響はない。
 
 ## 2. 権限制御
 

@@ -11,7 +11,7 @@
 
 保育士がメールアドレスとパスワードでログインし、成功した場合はAccess Token（JWT）を応答の本文で返し、Refresh TokenをCookieに設定する。
 
-<p>5回連続でログインに失敗したアカウントはロックし、失敗した場合の応答ではアカウントの有無を区別しない。
+5回連続でログインに失敗したアカウントはロックし、失敗した場合の応答ではアカウントの有無を区別しない。
 
 ## 2. 権限制御
 
@@ -128,7 +128,7 @@ RFC 9457の形式（`type`・`title`・`status`・`detail`・`code`・`requestId
 | 3 | 入力チェックの誤り | 422 | `VALIDATION_ERROR`・`INVALID_EMAIL_ADDRESS` | 7章のとおり | 7章のとおり |
 | 4 | 想定外のエラー | 500 | `INTERNAL_ERROR` | 共通の定義のとおり | 返さない |
 
-- `INVALID_CREDENTIALS`・`ACCOUNT_LOCKED` は `AuthErrorCode` に追加する。
+- `INVALID_CREDENTIALS`・`ACCOUNT_LOCKED` は `AuthErrorCode` で定義する。
 
 ## 11. ログ出力
 
