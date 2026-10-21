@@ -24,6 +24,14 @@ buildscript {
         classpath("com.mysql:mysql-connector-j")
         classpath("org.testcontainers:testcontainers-mysql")
     }
+    // ビルドの道具（Gradleのプラグイン・コード生成の部品）の中のJacksonも修正版にする（Spring Bootの次の修正版で直ったら消す）
+    configurations.classpath {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "tools.jackson.core") {
+                useVersion("3.1.7")
+            }
+        }
+    }
 }
 
 plugins {
@@ -104,13 +112,21 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // 脆弱性の対応（SpringBootが決める版より新しい修正版を使う。Spring Bootの次の修正版で直り次第削除）
-    implementation(platform("tools.jackson:jackson-bom:3.1.7"))
     constraints {
         implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.25")
         implementation("org.apache.tomcat.embed:tomcat-embed-el:11.0.25")
         implementation("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.25")
         add("checkstyle", "org.apache.commons:commons-lang3:3.18.0")
         add("checkstyle", "org.codehaus.plexus:plexus-utils:3.6.1")
+    }
+}
+
+// すべての設定（開発のときだけ使う部品を含む）でJacksonを修正版にする（Spring Bootの次の修正版で直ったら消す）
+configurations.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "tools.jackson.core") {
+            useVersion("3.1.7")
+        }
     }
 }
 
