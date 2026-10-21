@@ -1,75 +1,38 @@
-# React + TypeScript + Vite
+# HoikuLink 画面（frontend）
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+保育士向け連絡帳システムHoikuLinkの画面。React＋TypeScript＋Viteで作成。
 
-Currently, two official plugins are available:
+## 使用技術
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| 分類 | 技術 |
+|---|---|
+| 画面 | React、TypeScript、React Router |
+| ビルド・開発用サーバー | Vite |
+| テスト | Vitest、Testing Library |
+| Lint | ESLint |
 
-## React Compiler
+## 手元での起動
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+APIを `localhost:8080` で起動した状態で、次を実行する。開発用サーバーが `/api` をAPIに中継する。
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+ブラウザで http://localhost:5173 を開く。
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## コマンド
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| コマンド | 内容 |
+|---|---|
+| `npm run dev` | 開発用サーバーを起動する |
+| `npm test` | テストを実行する |
+| `npm run lint` | Lintを実行する |
+| `npm run build` | 型の確認と本番用のビルドを行う |
 
-```
+## 設計の要点
+
+- Access Tokenはメモリ（変数）にだけ持ち、ブラウザのストレージには保存しない
+- ページを開いたときは、HttpOnlyのCookieのRefresh Tokenで再発行してログインを取り戻す
+- 同時に呼ばれた再発行は1回にまとめる（同じRefresh Tokenで2回再発行すると、使い回しと判定されるため）
