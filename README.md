@@ -246,7 +246,7 @@ flowchart LR
   - Refresh TokenもJWT（失効の確認にDBが必要で利点なし）。
   - 有効期限30日（なりすましが可能な期間が長い）。
   - localStorageへの保存（XSSで読み取り可能）。
-- **根拠**：[RFC 9700 OAuth 2.0 Security Best Current Practice](https://www.rfc-editor.org/rfc/rfc9700)、[OWASP JSON Web Token Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html)
+- **根拠**：[RFC 9700 OAuth 2.0 Security Best Current Practice](https://www.rfc-editor.org/rfc/rfc9700)、[OWASP JSON Web Token Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html)
 
 ### 7. SameSite・カスタムヘッダー・Originの検証の3つを重ねたCSRF対策
 
