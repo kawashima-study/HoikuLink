@@ -15,23 +15,23 @@ UserAccount（アカウント）
 
 ### 1-2. 目的
 
-ログインに必要な情報（ログインID・パスワードハッシュ）と、ログイン失敗によるロックの状態を持つ。
-5回連続でログインに失敗するとアカウントをロックし、解除は園長・主任が行う。自分自身のロックは解除できない。
-※解除可否の確認は園運営モジュールにて行う。
+ログインに必要な情報（ログインID・パスワードハッシュ）と、ログイン失敗によるロックの状態を保持。
+5回連続でログインに失敗するとアカウントをロックし、解除は園長・主任が実施。自分自身のロックは解除不可。
+※解除可否の確認は園運営モジュールで実施。
 
 ## 2. クラス一覧
 
 | No. | クラス名 | 分類 | 概要 |
 |---:|---|---|---|
-| 1 | `UserAccount` | 集約ルート（Entity） | アカウント。ログインの失敗・成功の記録と、ロックの解除を受け付ける。 |
+| 1 | `UserAccount` | 集約ルート（Entity） | アカウント。ログインの失敗・成功の記録と、ロックの解除を受け付け。 |
 | 2 | `EmailAddress` | Value Object | ログインID（メールアドレス）。 |
 | 3 | `PasswordHash` | Value Object | パスワードのハッシュ値。 |
-| 4 | `LoginLock` | Value Object | ログインの失敗回数とロックの状態。変更時は新しい `LoginLock` を返す。 |
-| 5 | `AuthErrorCode` | 列挙型（`ErrorCode` を実装） | 認証モジュールのエラーコードの一覧。 |
-| 6 | `InvalidEmailAddressException` | 例外（`ApplicationException` を継承） | メールアドレスの長さ・形式の誤り。 |
-| 7 | `SelfUnlockNotAllowedException` | 例外（`ApplicationException` を継承） | 自分自身のロックの解除。 |
+| 4 | `LoginLock` | Value Object | ログインの失敗回数とロックの状態。変更時は新しい`LoginLock`を返却。 |
+| 5 | `AuthErrorCode` | 列挙型（`ErrorCode`を実装） | 認証モジュールのエラーコードの一覧。 |
+| 6 | `InvalidEmailAddressException` | 例外（`ApplicationException`を継承） | メールアドレスの長さ・形式の誤り。 |
+| 7 | `SelfUnlockNotAllowedException` | 例外（`ApplicationException`を継承） | 自分自身のロックの解除。 |
 | 8 | `RawPassword` | Value Object | 入力されたパスワード（ハッシュ値にする前の文字列）。 |
-| 9 | `PasswordVerifier` | インターフェース | 入力されたパスワードとパスワードのハッシュ値の照合。実装は `auth.adapter.out.crypto` に置き、Argon2id（メモリ12MiB・反復3回・並列度1）で照合する。 |
+| 9 | `PasswordVerifier` | インターフェース | 入力されたパスワードとパスワードのハッシュ値の照合。実装は`auth.adapter.out.crypto`に置き、Argon2id（メモリ12MiB・反復3回・並列度1）で照合。 |
 
 ## 3. 属性定義
 
@@ -39,7 +39,7 @@ UserAccount（アカウント）
 
 | No. | 項目名 | 型 | 必須 | 制約 | 備考 |
 |---:|---|---|:---:|---|---|
-| 1 | `userId` | `UserId` | ○ | | ユーザーID（`USR`＋ULID）。アカウントを識別する。 |
+| 1 | `userId` | `UserId` | ○ | | ユーザーID（`USR`＋ULID）。アカウントを識別。 |
 | 2 | `emailAddress` | `EmailAddress` | ○ | | ログインID。 |
 | 3 | `passwordHash` | `PasswordHash` | ○ | | パスワードのハッシュ値。 |
 | 4 | `loginLock` | `LoginLock` | ○ | | ログインの失敗回数とロックの状態。 |
@@ -48,7 +48,7 @@ UserAccount（アカウント）
 
 | No. | 項目名 | 型 | 必須 | 制約 | 備考 |
 |---:|---|---|:---:|---|---|
-| 1 | `value` | `String` | ○ | 254文字以内（Javaの文字数）であること。空白を含まないこと。`@` は1つのみとし、`@` の前に1文字以上あり、`@` の後ろが「1文字以上＋`.`＋1文字以上」を含むこと。 | 前後の空白を取り除き、小文字にそろえた値。空白は、Javaの `Character.isWhitespace` が空白とみなす文字（全角空白を含む）とする。 |
+| 1 | `value` | `String` | ○ | 254文字以内（Javaの文字数）であること。空白を含まないこと。`@`は1つのみとし、`@`の前に1文字以上あり、`@`の後ろが「1文字以上＋`.`＋1文字以上」を含むこと。 | 前後の空白を取り除き、小文字にそろえた値。空白は、Javaの`Character.isWhitespace`が空白とみなす文字（全角空白を含む）。 |
 
 ### 3-3. PasswordHash
 
@@ -62,14 +62,14 @@ UserAccount（アカウント）
 |---:|---|---|:---:|---|---|
 | 1 | `failedCount` | `int` | ○ | 未ロックの場合は0〜4、ロック中の場合は5であること。 | 連続したログインの失敗回数。 |
 | 2 | `lockedAt` | `Instant` | | ロック中のみ値があること。 | ロックした日時。 |
-| 3 | `unlockedAt` | `Instant` | | `unlockedBy` と、両方とも値がないか、両方とも値があること。 | 最後に解除した日時。 |
-| 4 | `unlockedBy` | `UserId` | | `unlockedAt` と、両方とも値がないか、両方とも値があること。 | 最後に解除した園長・主任のユーザーID。 |
+| 3 | `unlockedAt` | `Instant` | | `unlockedBy`と、両方とも値がないか、両方とも値があること。 | 最後に解除した日時。 |
+| 4 | `unlockedBy` | `UserId` | | `unlockedAt`と、両方とも値がないか、両方とも値があること。 | 最後に解除した園長・主任のユーザーID。 |
 
 ### 3-5. RawPassword
 
 | No. | 項目名 | 型 | 必須 | 制約 | 備考 |
 |---:|---|---|:---:|---|---|
-| 1 | `value` | `String` | ○ | | 入力されたパスワード。長さ・文字の種類は確認しない（ルールを変えた場合に、変更前のパスワードでログインできなくなるため）。 |
+| 1 | `value` | `String` | ○ | | 入力されたパスワード。長さ・文字の種類は確認対象外（ルールを変えた場合に、変更前のパスワードでログインできなくなるため）。 |
 
 ## 4. メソッド定義
 
@@ -77,83 +77,83 @@ UserAccount（アカウント）
 
 | No. | メソッド名 | 引数 | 戻り値 | 例外 | 処理概要 |
 |---:|---|---|---|---|---|
-| 1 | `restore` | `UserId`、`EmailAddress`、`PasswordHash`、`LoginLock` | `UserAccount` | `NullPointerException`（いずれかの引数が `null`） | 保存されている値からアカウントを作成する。 |
-| 2 | `recordLoginFailure` | `Instant`（失敗日時） | なし | `NullPointerException`（失敗日時が `null`） | ログインの失敗を記録し、5回目の失敗でロックする。ロック中は変更しない。 |
-| 3 | `recordLoginSuccess` | なし | なし | `IllegalStateException`（ロック中） | 失敗回数を0に初期化する。 |
-| 4 | `unlock` | `Instant`（解除日時）、`UserId`（解除者） | なし | `SelfUnlockNotAllowedException`（解除者が本人）、`NullPointerException`（解除日時・解除者が `null`） | 解除者が本人の場合は、ロックの有無にかかわらず例外とする。ロックを解除し、失敗回数を0に初期化して、解除日時と解除者を記録する。ロックされていないときは変更しない。 |
-| 5 | `isLocked` | なし | `boolean` | | ロック中の場合 `true` を返す。 |
-| 6 | `userId`、`emailAddress`、`passwordHash`、`loginLock` | なし | 各項目の型 | | 各項目の値を返す。 |
+| 1 | `restore` | `UserId`、`EmailAddress`、`PasswordHash`、`LoginLock` | `UserAccount` | `NullPointerException`（いずれかの引数が`null`） | 保存されている値からアカウントを作成。 |
+| 2 | `recordLoginFailure` | `Instant`（失敗日時） | なし | `NullPointerException`（失敗日時が`null`） | ログインの失敗を記録し、5回目の失敗でロック。ロック中は変更なし。 |
+| 3 | `recordLoginSuccess` | なし | なし | `IllegalStateException`（ロック中） | 失敗回数を0に初期化。 |
+| 4 | `unlock` | `Instant`（解除日時）、`UserId`（解除者） | なし | `SelfUnlockNotAllowedException`（解除者が本人）、`NullPointerException`（解除日時・解除者が`null`） | 解除者が本人の場合は、ロックの有無にかかわらず例外。ロックを解除し、失敗回数を0に初期化して、解除日時と解除者を記録。ロックされていないときは変更なし。 |
+| 5 | `isLocked` | なし | `boolean` | | ロック中の場合`true`を返却。 |
+| 6 | `userId`、`emailAddress`、`passwordHash`、`loginLock` | なし | 各項目の型 | | 各項目の値を返却。 |
 
 ### 4-2. EmailAddress
 
 | No. | メソッド名 | 引数 | 戻り値 | 例外 | 処理概要 |
 |---:|---|---|---|---|---|
-| 1 | コンストラクタ | `String` | | `NullPointerException`（`null`）、`InvalidEmailAddressException`（254文字超過、形式の誤り） | 次の順に処理する。①`null` を確認する。②前後の空白を取り除く。③ロケールに依存せずに小文字にそろえる（`Locale.ROOT`）。④②③の後の値で長さを確認する。⑤形式を確認する。 |
-| 2 | `value` | なし | `String` | | 値を返す。 |
-| 3 | `toString` | なし | `String` | | 中身を隠した文字列を返す（例：`EmailAddress[***]`）。 |
+| 1 | コンストラクタ | `String` | | `NullPointerException`（`null`）、`InvalidEmailAddressException`（254文字超過、形式の誤り） | 次の順に処理。①`null`を確認。②前後の空白を除去。③ロケールに依存せずに小文字に統一（`Locale.ROOT`）。④②③の後の値で長さを確認。⑤形式を確認。 |
+| 2 | `value` | なし | `String` | | 値を返却。 |
+| 3 | `toString` | なし | `String` | | 中身を隠した文字列を返却（例：`EmailAddress[***]`）。 |
 
 ### 4-3. PasswordHash
 
 | No. | メソッド名 | 引数 | 戻り値 | 例外 | 処理概要 |
 |---:|---|---|---|---|---|
-| 1 | コンストラクタ | `String` | | `NullPointerException`（`null`）、`IllegalArgumentException`（空文字列、または空白のみ） | 値を確認する。 |
-| 2 | `value` | なし | `String` | | 値を返す。 |
-| 3 | `toString` | なし | `String` | | 中身を隠した文字列を返す。 |
+| 1 | コンストラクタ | `String` | | `NullPointerException`（`null`）、`IllegalArgumentException`（空文字列、または空白のみ） | 値を確認。 |
+| 2 | `value` | なし | `String` | | 値を返却。 |
+| 3 | `toString` | なし | `String` | | 中身を隠した文字列を返却。 |
 
 ### 4-4. LoginLock
 
 | No. | メソッド名 | 引数 | 戻り値 | 例外 | 処理概要 |
 |---:|---|---|---|---|---|
-| 1 | `initial` | なし | `LoginLock` | | 失敗回数0、ロックなしの状態を作成する。 |
-| 2 | `restore` | `int`（失敗回数）、`Instant`（ロック日時）、`Instant`（解除日時）、`UserId`（解除者） | `LoginLock` | `IllegalArgumentException`（属性定義の制約を満たさない組み合わせ） | 保存されている値から作成する。 |
-| 3 | `recordFailure` | `Instant`（失敗日時） | `LoginLock` | `NullPointerException`（失敗日時が `null`） | 失敗回数を1増やす。5回目でロックし、その日時をロック日時とする。ロック中は同じ状態を返す。 |
-| 4 | `recordSuccess` | なし | `LoginLock` | `IllegalStateException`（ロック中） | 失敗回数を0に初期化する。 |
-| 5 | `unlock` | `Instant`（解除日時）、`UserId`（解除者） | `LoginLock` | `NullPointerException`（解除日時・解除者が `null`） | ロック日時を消去し、失敗回数を0に初期化して、解除日時・解除者を記録する。ロックされていないときは同じ状態を返す。 |
-| 6 | `isLocked` | なし | `boolean` | | ロック日時がある場合 `true` を返す。 |
-| 7 | `failedCount` | なし | `int` | | 失敗回数を返す。 |
-| 8 | `lockedAt` | なし | `Optional<Instant>` | | ロック日時を返す。値がない場合は空を返す。 |
-| 9 | `unlockedAt` | なし | `Optional<Instant>` | | 解除日時を返す。値がない場合は空を返す。 |
-| 10 | `unlockedBy` | なし | `Optional<UserId>` | | 解除者を返す。値がない場合は空を返す。 |
+| 1 | `initial` | なし | `LoginLock` | | 失敗回数0、ロックなしの状態を作成。 |
+| 2 | `restore` | `int`（失敗回数）、`Instant`（ロック日時）、`Instant`（解除日時）、`UserId`（解除者） | `LoginLock` | `IllegalArgumentException`（属性定義の制約を満たさない組み合わせ） | 保存されている値から作成。 |
+| 3 | `recordFailure` | `Instant`（失敗日時） | `LoginLock` | `NullPointerException`（失敗日時が`null`） | 失敗回数に1を加算。5回目でロックし、その日時をロック日時。ロック中は同じ状態を返却。 |
+| 4 | `recordSuccess` | なし | `LoginLock` | `IllegalStateException`（ロック中） | 失敗回数を0に初期化。 |
+| 5 | `unlock` | `Instant`（解除日時）、`UserId`（解除者） | `LoginLock` | `NullPointerException`（解除日時・解除者が`null`） | ロック日時を消去し、失敗回数を0に初期化して、解除日時・解除者を記録。ロックされていないときは同じ状態を返却。 |
+| 6 | `isLocked` | なし | `boolean` | | ロック日時がある場合`true`を返却。 |
+| 7 | `failedCount` | なし | `int` | | 失敗回数を返却。 |
+| 8 | `lockedAt` | なし | `Optional<Instant>` | | ロック日時を返却。値がない場合は空を返却。 |
+| 9 | `unlockedAt` | なし | `Optional<Instant>` | | 解除日時を返却。値がない場合は空を返却。 |
+| 10 | `unlockedBy` | なし | `Optional<UserId>` | | 解除者を返却。値がない場合は空を返却。 |
 
 ### 4-5. RawPassword
 
 | No. | メソッド名 | 引数 | 戻り値 | 例外 | 処理概要 |
 |---:|---|---|---|---|---|
-| 1 | コンストラクタ | `String` | | `NullPointerException`（`null`） | 値を確認する。 |
-| 2 | `value` | なし | `String` | | 値を返す。 |
-| 3 | `toString` | なし | `String` | | 中身を隠した文字列を返す（例：`RawPassword[***]`）。 |
+| 1 | コンストラクタ | `String` | | `NullPointerException`（`null`） | 値を確認。 |
+| 2 | `value` | なし | `String` | | 値を返却。 |
+| 3 | `toString` | なし | `String` | | 中身を隠した文字列を返却（例：`RawPassword[***]`）。 |
 
 ### 4-6. PasswordVerifier
 
 | No. | メソッド名 | 引数 | 戻り値 | 例外 | 処理概要 |
 |---:|---|---|---|---|---|
-| 1 | `matches` | `RawPassword`、`PasswordHash` | `boolean` | | 入力されたパスワードがハッシュ値と一致する場合 `true` を返す。 |
-| 2 | `matchesDummy` | `RawPassword` | `boolean` | | ダミーのハッシュ値で照合し、常に `false` を返す。アカウントがない場合に、照合の処理時間をそろえるために使う。 |
+| 1 | `matches` | `RawPassword`、`PasswordHash` | `boolean` | | 入力されたパスワードがハッシュ値と一致する場合`true`を返却。 |
+| 2 | `matchesDummy` | `RawPassword` | `boolean` | | ダミーのハッシュ値で照合し、常に`false`を返却。アカウントがない場合に、照合の処理時間をそろえるために使用。 |
 
 ## 5. 業務ルール（不変条件）
 
 | No. | 業務ルール | 実装箇所 | 違反時の動作 |
 |---:|---|---|---|
-| 1 | 5回連続でログインに失敗した場合、ロックする。 | `LoginLock.recordFailure` | ― |
-| 2 | ロック中はログインできない。 | `UserAccount.recordLoginSuccess`、`LoginLock.recordSuccess` | `IllegalStateException` |
-| 3 | ロック中に失敗しても、失敗回数・ロック日時は変更しない。 | `LoginLock.recordFailure` | ― |
-| 4 | ログインに成功した場合、失敗回数を0に初期化する。 | `LoginLock.recordSuccess` | ― |
-| 5 | 解除した場合、失敗回数を0に初期化する。 | `LoginLock.unlock` | ― |
-| 6 | メールアドレスは小文字にそろえる。 | `EmailAddress` | ― |
+| 1 | 5回連続でログインに失敗した場合、ロック。 | `LoginLock.recordFailure` | ― |
+| 2 | ロック中はログイン不可。 | `UserAccount.recordLoginSuccess`、`LoginLock.recordSuccess` | `IllegalStateException` |
+| 3 | ロック中に失敗しても、失敗回数・ロック日時は変更なし。 | `LoginLock.recordFailure` | ― |
+| 4 | ログインに成功した場合、失敗回数を0に初期化。 | `LoginLock.recordSuccess` | ― |
+| 5 | 解除した場合、失敗回数を0に初期化。 | `LoginLock.unlock` | ― |
+| 6 | メールアドレスは小文字に統一。 | `EmailAddress` | ― |
 | 7 | メールアドレスは254文字以内で、メールアドレスの形式であること。 | `EmailAddress` | `InvalidEmailAddressException` |
 | 8 | 失敗回数とロック日時は、未ロック（失敗回数0〜4・ロック日時なし）か、ロック中（失敗回数5・ロック日時あり）のいずれかであること。 | `LoginLock` | `IllegalArgumentException` |
 | 9 | 解除日時と解除者は、両方とも値がないか、両方とも値があること。 | `LoginLock` | `IllegalArgumentException` |
-| 10 | 自分自身のロックは解除できない。 | `UserAccount.unlock` | `SelfUnlockNotAllowedException` |
+| 10 | 自分自身のロックは解除不可。 | `UserAccount.unlock` | `SelfUnlockNotAllowedException` |
 
 ## 6. 例外定義
 
 | No. | 例外クラス | エラーコード | 発生条件 |
 |---:|---|---|---|
-| 1 | `InvalidEmailAddressException`（`ApplicationException` を継承） | `INVALID_EMAIL_ADDRESS`（`AuthErrorCode`） | メールアドレスが254文字を超える、または形式が誤っている。 |
-| 2 | `NullPointerException` | ― | メールアドレス・パスワードハッシュ・失敗日時・解除日時・解除者に `null` が渡された。または、アカウントの復元でユーザーID・メールアドレス・パスワードハッシュ・ログインの失敗回数とロックの状態のいずれかに `null` が渡された（プログラム、または保存データの誤り）。 |
-| 3 | `IllegalArgumentException` | ― | パスワードハッシュが空文字列、または空白のみ。`LoginLock` の復元で、属性定義の制約を満たさない組み合わせが渡された（プログラム、または保存データの誤り）。 |
-| 4 | `IllegalStateException` | ― | ロック中にログイン成功の記録が呼ばれた（プログラムの誤り）。 |
-| 5 | `SelfUnlockNotAllowedException`（`ApplicationException` を継承） | `SELF_UNLOCK_NOT_ALLOWED`（`AuthErrorCode`） | 解除者のユーザーIDが、アカウントのユーザーIDと同じ。 |
+| 1 | `InvalidEmailAddressException`（`ApplicationException`を継承） | `INVALID_EMAIL_ADDRESS`（`AuthErrorCode`） | メールアドレスが254文字を超える、または形式の誤り。 |
+| 2 | `NullPointerException` | ― | メールアドレス・パスワードハッシュ・失敗日時・解除日時・解除者に`null`が渡された場合。または、アカウントの復元でユーザーID・メールアドレス・パスワードハッシュ・ログインの失敗回数とロックの状態のいずれかに`null`が渡された場合（プログラム、または保存データの誤り）。 |
+| 3 | `IllegalArgumentException` | ― | パスワードハッシュが空文字列、または空白のみ。`LoginLock`の復元で、属性定義の制約を満たさない組み合わせが渡された場合（プログラム、または保存データの誤り）。 |
+| 4 | `IllegalStateException` | ― | ロック中にログイン成功の記録が呼ばれた場合（プログラムの誤り）。 |
+| 5 | `SelfUnlockNotAllowedException`（`ApplicationException`を継承） | `SELF_UNLOCK_NOT_ALLOWED`（`AuthErrorCode`） | 解除者のユーザーIDが、アカウントのユーザーIDと同じ。 |
 
 ### 6-1. エラーコード（`AuthErrorCode`）
 
@@ -164,28 +164,34 @@ UserAccount（アカウント）
 | 3 | `INVALID_CREDENTIALS` | ログインの失敗（アカウントがない、またはパスワードが正しくない）。 | メールアドレスまたはパスワードが正しくありません。 | 入力内容を確認してもう一度お試しください。 |
 | 4 | `ACCOUNT_LOCKED` | ロック中のアカウントでのログイン（パスワードが正しい場合）。 | アカウントがロックされています。 | 園長または主任にロックの解除を依頼してください。 |
 
-※タイトルはエラーの種類の説明、詳細は利用者が問題を直すための説明とする。どちらにも入力された値を含めない。
+※タイトルはエラーの種類の説明、詳細は利用者が問題を直すための説明。どちらにも入力された値の記載なし。
 
 ## 7. 状態遷移
 
 ```mermaid
 stateDiagram-v2
+    direction LR
     [*] --> 未ロック
-    未ロック --> 未ロック : ログイン失敗（1〜4回目）
-    未ロック --> 未ロック : ログイン成功（失敗回数を0に初期化）
-    未ロック --> ロック中 : ログイン失敗（5回目）
-    ロック中 --> ロック中 : ログイン失敗（変更なし）
-    ロック中 --> 未ロック : 解除（本人以外。失敗回数を0に初期化）
+    未ロック --> ロック中 : ①5回目の失敗
+    ロック中 --> 未ロック : ②解除
 ```
+
+| No. | 遷移 | きっかけ | 失敗回数・ロック日時 |
+|---:|---|---|---|
+| ① | 未ロック → ロック中 | 5回目のログインの失敗。 | 失敗回数を5、ロック日時を失敗日時に設定。 |
+| ② | ロック中 → 未ロック | 園長・主任による解除（本人以外）。 | 失敗回数を0に初期化し、ロック日時を消去。解除日時・解除者を記録。 |
+| ― | 未ロックのまま | 1〜4回目のログインの失敗。 | 失敗回数に1を加算。 |
+| ― | 未ロックのまま | ログインの成功。 | 失敗回数を0に初期化。 |
+| ― | ロック中のまま | ログインの失敗。 | 変更なし。 |
 
 | No. | 状態 | 条件 |
 |---:|---|---|
-| 1 | 未ロック | ロック日時がない。 |
-| 2 | ロック中 | ロック日時がある。 |
+| 1 | 未ロック | ロック日時なし。 |
+| 2 | ロック中 | ロック日時あり。 |
 
 ## 8. テーブル対応
 
-テーブル：`auth.credentials`
+テーブル：[`auth.credentials`](../../database/table-design.md#credentialsアカウント)
 
 | No. | クラス・項目 | カラム |
 |---:|---|---|
@@ -203,36 +209,36 @@ stateDiagram-v2
 
 | No. | 種類 | 名前・置き場所 | 備考 |
 |---:|---|---|---|
-| 1 | インターフェース | `UserAccountRepository`（`auth.domain`） | 保存と読み出しのメソッドの定義のみを持つ。 |
-| 2 | 実装 | `auth.adapter.out.persistence` | jOOQでDBを読み書きする。 |
+| 1 | インターフェース | `UserAccountRepository`（`auth.domain`） | 保存と読み出しのメソッドの定義のみを保持。 |
+| 2 | 実装 | `auth.adapter.out.persistence` | jOOQでDBを読み書き。 |
 
 ### 9-2. メソッド定義
 
 | No. | メソッド名 | 引数 | 戻り値 | 処理概要 |
 |---:|---|---|---|---|
-| 1 | `findByEmailForUpdate` | `EmailAddress` | `Optional<UserAccount>` | メールアドレスでアカウントを探し、その行をロックする。削除済みの行は対象外とする。見つからない場合は空を返す。 |
-| 2 | `findByIdForUpdate` | `UserId` | `Optional<UserAccount>` | ユーザーIDでアカウントを探し、その行をロックする。削除済みの行は対象外とする。見つからない場合は空を返す。 |
-| 3 | `update` | `UserAccount`、`UserId`（更新者）、`Instant`（更新日時） | なし | 失敗回数・ロック日時・解除日時・解除者・更新日時・更新者を書き込む。 |
+| 1 | `findByEmailForUpdate` | `EmailAddress` | `Optional<UserAccount>` | メールアドレスでアカウントを探し、その行をロック。削除済みの行は対象外。見つからない場合は空を返却。 |
+| 2 | `findByIdForUpdate` | `UserId` | `Optional<UserAccount>` | ユーザーIDでアカウントを探し、その行をロック。削除済みの行は対象外。見つからない場合は空を返却。 |
+| 3 | `update` | `UserAccount`、`UserId`（更新者）、`Instant`（更新日時） | なし | 失敗回数・ロック日時・解除日時・解除者・更新日時・更新者を書き込み。 |
 
 ### 9-3. 処理の決まり
 
 | No. | 項目 | 内容 |
 |---:|---|---|
-| 1 | 行のロック | 読み込むときに対象の行をロックする（`SELECT … FOR UPDATE`）。同じアカウントへの後からの処理は、前の処理が終わるまで待つ。ロックはトランザクションの終わりまで続くため、呼び出す側はトランザクションの中で呼ぶ。 |
-| 2 | 削除済みの行 | 削除日時（`deleted_at`）に値がある行は、読み込みの対象外とする。 |
-| 3 | 日時の変換 | `Instant` とDBの `DATETIME`（日本時間）の変換は、Repositoryの中で `BusinessTimeZone.JAPAN` を使って行う。 |
-| 4 | 更新者 | ログインの失敗・成功の記録はアカウント自身のユーザーID、ロックの解除は解除した人のユーザーIDとする。更新者と更新日時は、呼び出す側が渡す。 |
-| 5 | 対象外の項目 | パスワード変更要否・パスワード変更日時・アカウント停止日時・最終ログイン日時は、読み書きしない。 |
-| 6 | 新規作成 | アカウントを新しく作るメソッドは持たない。 |
+| 1 | 行のロック | 読み込むときに対象の行をロック（`SELECT … FOR UPDATE`）。同じアカウントへの後からの処理は、前の処理が終わるまで待機。ロックはトランザクションの終わりまで続くため、呼び出す側はトランザクションの中で呼び出し。 |
+| 2 | 削除済みの行 | 削除日時（`deleted_at`）に値がある行は、読み込みの対象外。 |
+| 3 | 日時の変換 | `Instant`とDBの`DATETIME`（日本時間）の変換は、Repositoryの中で`BusinessTimeZone.JAPAN`を使って実施。 |
+| 4 | 更新者 | ログインの失敗・成功の記録はアカウント自身のユーザーID、ロックの解除は解除した人のユーザーID。更新者と更新日時は、呼び出す側が指定。 |
+| 5 | 対象外の項目 | パスワード変更要否・パスワード変更日時・アカウント停止日時・最終ログイン日時は、読み書きの対象外。 |
+| 6 | 新規作成 | アカウントを新しく作成するメソッドはなし。 |
 
 ## 10. ログ出力
 
 | No. | 対象 | 内容 |
 |---:|---|---|
-| 1 | `EmailAddress`・`PasswordHash`・`RawPassword` の `toString` | 中身を出力しない。 |
+| 1 | `EmailAddress`・`PasswordHash`・`RawPassword`の`toString` | 中身の出力なし。 |
 
 ## 11. 改訂履歴
 
 | 版 | 日付 | 内容 |
 |---|---|---|
-| 1.0 | 2026-10-11 | 初版。 |
+| 1.0 | 2026-10-11 | 初版 |
