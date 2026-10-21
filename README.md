@@ -378,6 +378,10 @@ cd frontend && npm run lint && npm test
 
 ## ドキュメント
 
+### 要件定義
+
+- [要件定義（保育士用Webアプリ）](docs/requirements/requirements-teacher.md)
+
 ### 基本設計
 
 - [画面一覧](docs/basic-design/04_screen-list.md)
