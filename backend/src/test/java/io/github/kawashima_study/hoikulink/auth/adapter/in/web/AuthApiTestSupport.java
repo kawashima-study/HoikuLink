@@ -59,6 +59,8 @@ final class AuthApiTestSupport {
         insertAccount();
         String body = "{\"email\":\"%s\",\"password\":\"%s\"}".formatted(EMAIL, PASSWORD);
         String setCookie = mockMvc.perform(post("/api/v1/auth/login")
+                        .header(CsrfGuard.CUSTOM_HEADER_NAME, CsrfGuard.CUSTOM_HEADER_VALUE)
+                        .header(HttpHeaders.ORIGIN, ALLOWED_ORIGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andReturn()

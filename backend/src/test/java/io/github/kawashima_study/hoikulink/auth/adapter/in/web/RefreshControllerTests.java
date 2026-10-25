@@ -161,4 +161,22 @@ class RefreshControllerTests {
                         .cookie(new Cookie(RefreshTokenCookie.NAME, refreshToken)))
                 .andExpect(status().isForbidden());
     }
+
+    /**
+     * 送信元の見出しがない場合に403になることを確認
+     *
+     * @throws Exception APIの呼び出しに失敗した場合
+     */
+    @Test
+    @DisplayName("送信元の見出しがなければ403を返す。")
+    void rejectsWithoutOrigin() throws Exception {
+        // ログインしてリフレッシュトークンを受け取る
+        String refreshToken = support.loginAndGetRefreshToken();
+
+        // 送信元の見出しを付けずに再発行すると403になることを確認
+        mockMvc.perform(post(REFRESH_PATH)
+                        .header(CsrfGuard.CUSTOM_HEADER_NAME, CsrfGuard.CUSTOM_HEADER_VALUE)
+                        .cookie(new Cookie(RefreshTokenCookie.NAME, refreshToken)))
+                .andExpect(status().isForbidden());
+    }
 }

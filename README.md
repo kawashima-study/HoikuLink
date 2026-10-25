@@ -250,7 +250,7 @@ flowchart LR
 
 ### 7. SameSite・カスタムヘッダー・Originの検証の3つを重ねたCSRF対策
 
-- **決定**：Cookieを使うAPIを認証の3つ（ログイン・再発行・ログアウト）に限定し、Cookieに`SameSite=Strict`を付与。再発行とログアウトでは、カスタムヘッダー（`X-Requested-With`）とOriginの一致を検証。ほかのAPIはCookieを使わず、Access Tokenをヘッダーで送信。
+- **決定**：Cookieを使うAPIを認証の3つ（ログイン・再発行・ログアウト）に限定し、Cookieに`SameSite=Strict`を付与。3つのAPIすべてで、カスタムヘッダー（`X-Requested-With`）とOriginの一致を検証。ほかのAPIはCookieを使わず、Access Tokenをヘッダーで送信。
 - **理由**
   - カスタムヘッダーは、別のサイトから送るとCORSの事前確認が必要になり、許可していないサイトからは送信不可。
   - どれも数行で実装でき、1つが破られても他で防御。

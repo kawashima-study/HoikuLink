@@ -52,7 +52,7 @@ export function hasAccessToken(): boolean {
 export async function login(email: string, password: string): Promise<void> {
   const response = await fetch('/api/v1/auth/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...CUSTOM_HEADER },
     body: JSON.stringify({ email, password }),
   })
   if (!response.ok) {
