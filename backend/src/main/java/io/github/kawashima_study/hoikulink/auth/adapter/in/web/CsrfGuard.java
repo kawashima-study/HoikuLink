@@ -6,7 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 
 /**
- * Cookieで認証するAPI（再発行・ログアウト）のCSRF対策の確認
+ * Cookieを使うAPI（ログイン・再発行・ログアウト）のCSRF対策の確認
  * <p>独自の見出しと送信元（Origin）の両方を確認し他のサイトからのリクエストを断る
  */
 @Component

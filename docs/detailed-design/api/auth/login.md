@@ -19,6 +19,7 @@
 |---|---|---|
 | 1 | ログインの要否 | 不要（未ログインで呼び出す） |
 | 2 | 呼び出しの回数の制限 | WAFで同じIPアドレスから5分間に100回まで。 |
+| 3 | CSRF対策 | [再発行APIの詳細設計書の2章](refresh.md#2-権限制御)と同じ。満たさない場合は403。 |
 
 ## 3. HTTPメソッド・エンドポイント
 
@@ -34,6 +35,8 @@
 | No. | 項目名 | 必須 | 内容 |
 |---:|---|:---:|---|
 | 1 | `Content-Type` | ○ | `application/json` |
+| 2 | `X-Requested-With` | ○ | `XMLHttpRequest` |
+| 3 | `Origin` | ○ | 画面のドメイン（ブラウザが付与） |
 
 ### 4-2. ボディ
 
@@ -69,14 +72,15 @@ RFC 9457の形式（`type`・`title`・`status`・`detail`・`code`・`requestId
 | No. | 処理 | 詳細 |
 |---:|---|---|
 | 1 | 入力チェック | [7章](#7-バリデーションチェック)のとおり確認。 |
-| 2 | アカウントの読み込み | `UserAccountRepository.findByEmailForUpdate`で読み込み、行をロック。 |
-| 3 | アカウントがない場合 | ダミーのハッシュ値でパスワードを照合して処理時間をそろえ、ログインの失敗として応答。 |
-| 4 | パスワードの照合 | パスワードの照合のインターフェース（Argon2id）で、入力されたパスワードと保存されているハッシュ値を照合。 |
-| 5 | ロック中の場合 | 照合の結果にかかわらず失敗回数とロックの状態は変更なし。パスワードが正しい場合はロック中であることを、正しくない場合はログインの失敗を応答。 |
-| 6 | パスワードが正しくない場合 | `UserAccount.recordLoginFailure`で失敗を記録し、`UserAccountRepository.update`で書き込み。ログインの失敗として応答。 |
-| 7 | パスワードが正しい場合 | `UserAccount.recordLoginSuccess`で失敗回数を0に戻し、`UserAccountRepository.update`で書き込み。 |
-| 8 | トークンの発行 | `AccessTokenIssuer.issue`でAccess Token（JWT）を発行。`RefreshTokenGenerator.generate`で生のRefresh Tokenを作り、`RefreshTokenHash.of`でハッシュ値（SHA-256）に変換し、`RefreshToken.issue`で作成。`RefreshTokenRepository.save`で`auth.refresh_tokens`に保存。 |
-| 9 | 応答 | [5-1](#5-1-成功200)のとおり返却。 |
+| 2 | CSRF対策の確認 | [2章](#2-権限制御)のとおり確認。 |
+| 3 | アカウントの読み込み | `UserAccountRepository.findByEmailForUpdate`で読み込み、行をロック。 |
+| 4 | アカウントがない場合 | ダミーのハッシュ値でパスワードを照合して処理時間をそろえ、ログインの失敗として応答。 |
+| 5 | パスワードの照合 | パスワードの照合のインターフェース（Argon2id）で、入力されたパスワードと保存されているハッシュ値を照合。 |
+| 6 | ロック中の場合 | 照合の結果にかかわらず失敗回数とロックの状態は変更なし。パスワードが正しい場合はロック中であることを、正しくない場合はログインの失敗を応答。 |
+| 7 | パスワードが正しくない場合 | `UserAccount.recordLoginFailure`で失敗を記録し、`UserAccountRepository.update`で書き込み。ログインの失敗として応答。 |
+| 8 | パスワードが正しい場合 | `UserAccount.recordLoginSuccess`で失敗回数を0に戻し、`UserAccountRepository.update`で書き込み。 |
+| 9 | トークンの発行 | `AccessTokenIssuer.issue`でAccess Token（JWT）を発行。`RefreshTokenGenerator.generate`で生のRefresh Tokenを作り、`RefreshTokenHash.of`でハッシュ値（SHA-256）に変換し、`RefreshToken.issue`で作成。`RefreshTokenRepository.save`で`auth.refresh_tokens`に保存。 |
+| 10 | 応答 | [5-1](#5-1-成功200)のとおり返却。 |
 
 - ログインのユースケースは例外を投げず、成功・失敗・ロック中を表す結果を返却。APIの側で結果を応答に変換。
 - 書き込みの更新者・作成者はアカウント自身のユーザーID。日時は`Clock`から取得。
@@ -87,7 +91,7 @@ RFC 9457の形式（`type`・`title`・`status`・`detail`・`code`・`requestId
 | No. | 名前 | 種類 | 置き場所 | 内容 |
 |---:|---|---|---|---|
 | 1 | `LoginUseCase` | インターフェース | `auth.application` | ログインのユースケースの入口。APIの側はこのインターフェースだけを使用。メソッドは`login(LoginCommand)`で、`LoginResult`を返却。 |
-| 2 | `LoginService` | クラス（`LoginUseCase`の実装） | `auth.application` | 処理フローNo.2〜8を実施。メソッドに`@Transactional`を付与。 |
+| 2 | `LoginService` | クラス（`LoginUseCase`の実装） | `auth.application` | 処理フローNo.3〜9を実施。メソッドに`@Transactional`を付与。 |
 | 3 | `LoginCommand` | record | `auth.application` | 入力。`email`（文字列）・`password`（文字列）。ユースケースの中で`EmailAddress`・`RawPassword`に変換。 |
 | 4 | `LoginResult` | sealed interface | `auth.application` | 結果。次の3種類のrecordのいずれか。 |
 
@@ -111,22 +115,23 @@ RFC 9457の形式（`type`・`title`・`status`・`detail`・`code`・`requestId
 
 | No. | テーブル | 操作 | 条件 | 内容 |
 |---:|---|---|---|---|
-| 1 | `auth.credentials` | 参照（行のロック） | 処理フローNo.2 | メールアドレスが一致し、削除されていない行 |
-| 2 | `auth.credentials` | 更新 | 処理フローNo.6・7 | 失敗回数・ロック日時・解除日時・解除者・更新日時・更新者 |
-| 3 | `auth.refresh_tokens` | 登録 | 処理フローNo.8 | Refresh Tokenのハッシュ値・有効期限など |
+| 1 | `auth.credentials` | 参照（行のロック） | 処理フローNo.3 | メールアドレスが一致し、削除されていない行 |
+| 2 | `auth.credentials` | 更新 | 処理フローNo.7・8 | 失敗回数・ロック日時・解除日時・解除者・更新日時・更新者 |
+| 3 | `auth.refresh_tokens` | 登録 | 処理フローNo.9 | Refresh Tokenのハッシュ値・有効期限など |
 
 ## 9. トランザクション
 
-処理フローNo.2〜8を1つのトランザクションで実施。ロックはトランザクションの終わりまで継続。ログインの失敗でも、失敗回数の書き込みを確定（例外でトランザクションを取り消さない）。
+処理フローNo.3〜9を1つのトランザクションで実施。ロックはトランザクションの終わりまで継続。ログインの失敗でも、失敗回数の書き込みを確定（例外でトランザクションを取り消さない）。
 
 ## 10. エラー処理
 
 | No. | 条件 | HTTPのステータス | エラーコード | タイトル（`title`） | 詳細（`detail`） |
 |---:|---|---:|---|---|---|
-| 1 | アカウントがない、またはパスワードが正しくない（ロック中でパスワードが正しくない場合を含む） | 401 | `INVALID_CREDENTIALS` | メールアドレスまたはパスワードが正しくありません。 | 入力内容を確認してもう一度お試しください。 |
-| 2 | ロック中でパスワードが正しい | 401 | `ACCOUNT_LOCKED` | アカウントがロックされています。 | 園長または主任にロックの解除を依頼してください。 |
-| 3 | 入力チェックの誤り | 422 | `VALIDATION_ERROR`・`INVALID_EMAIL_ADDRESS` | [7章](#7-バリデーションチェック)のとおり | [7章](#7-バリデーションチェック)のとおり |
-| 4 | 想定外のエラー | 500 | `INTERNAL_ERROR` | 共通の定義のとおり | 返却なし |
+| 1 | CSRF対策の確認に通らない | 403 | `FORBIDDEN` | 共通の定義のとおり | HoikuLinkの画面から操作してください。 |
+| 2 | アカウントがない、またはパスワードが正しくない（ロック中でパスワードが正しくない場合を含む） | 401 | `INVALID_CREDENTIALS` | メールアドレスまたはパスワードが正しくありません。 | 入力内容を確認してもう一度お試しください。 |
+| 3 | ロック中でパスワードが正しい | 401 | `ACCOUNT_LOCKED` | アカウントがロックされています。 | 園長または主任にロックの解除を依頼してください。 |
+| 4 | 入力チェックの誤り | 422 | `VALIDATION_ERROR`・`INVALID_EMAIL_ADDRESS` | [7章](#7-バリデーションチェック)のとおり | [7章](#7-バリデーションチェック)のとおり |
+| 5 | 想定外のエラー | 500 | `INTERNAL_ERROR` | 共通の定義のとおり | 返却なし |
 
 - `INVALID_CREDENTIALS`・`ACCOUNT_LOCKED`は`AuthErrorCode`で定義。
 

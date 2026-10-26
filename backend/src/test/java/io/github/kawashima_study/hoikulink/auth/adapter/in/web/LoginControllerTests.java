@@ -214,6 +214,67 @@ class LoginControllerTests {
     }
 
     /**
+     * 独自の見出しがない場合に403になりCookieを設定しないことを確認
+     *
+     * @throws Exception APIの呼び出しに失敗した場合
+     */
+    @Test
+    @DisplayName("独自の見出しがなければ403を返しCookieを設定しない。")
+    void rejectsWithoutCustomHeader() throws Exception {
+        // アカウントを入れる
+        insertAccount(false);
+
+        // 独自の見出しを付けずに正しいパスワードでログインすると403になりCookieがないことを確認
+        mockMvc.perform(post(LOGIN_PATH)
+                        .header(HttpHeaders.ORIGIN, AuthApiTestSupport.ALLOWED_ORIGIN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bodyOf(EMAIL, PASSWORD)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
+    }
+
+    /**
+     * 許可していない送信元からの場合に403になることを確認
+     *
+     * @throws Exception APIの呼び出しに失敗した場合
+     */
+    @Test
+    @DisplayName("許可していない送信元からなら403を返す。")
+    void rejectsOtherOrigin() throws Exception {
+        // アカウントを入れる
+        insertAccount(false);
+
+        // 他のサイトを送信元としてログインすると403になることを確認
+        mockMvc.perform(post(LOGIN_PATH)
+                        .header(CsrfGuard.CUSTOM_HEADER_NAME, CsrfGuard.CUSTOM_HEADER_VALUE)
+                        .header(HttpHeaders.ORIGIN, "https://evil.example.com")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bodyOf(EMAIL, PASSWORD)))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
+    }
+
+    /**
+     * 送信元の見出しがない場合に403になることを確認
+     *
+     * @throws Exception APIの呼び出しに失敗した場合
+     */
+    @Test
+    @DisplayName("送信元の見出しがなければ403を返す。")
+    void rejectsWithoutOrigin() throws Exception {
+        // アカウントを入れる
+        insertAccount(false);
+
+        // 送信元の見出しを付けずにログインすると403になることを確認
+        mockMvc.perform(post(LOGIN_PATH)
+                        .header(CsrfGuard.CUSTOM_HEADER_NAME, CsrfGuard.CUSTOM_HEADER_VALUE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bodyOf(EMAIL, PASSWORD)))
+                .andExpect(status().isForbidden());
+    }
+
+    /**
      * ログインAPIを呼び出す
      *
      * @param email メールアドレス
@@ -222,9 +283,22 @@ class LoginControllerTests {
      * @throws Exception APIの呼び出しに失敗した場合
      */
     private ResultActions login(String email, String password) throws Exception {
-        String body = "{\"email\":\"%s\",\"password\":\"%s\"}".formatted(email, password);
-        return mockMvc.perform(
-                post(LOGIN_PATH).contentType(MediaType.APPLICATION_JSON).content(body));
+        return mockMvc.perform(post(LOGIN_PATH)
+                .header(CsrfGuard.CUSTOM_HEADER_NAME, CsrfGuard.CUSTOM_HEADER_VALUE)
+                .header(HttpHeaders.ORIGIN, AuthApiTestSupport.ALLOWED_ORIGIN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(bodyOf(email, password)));
+    }
+
+    /**
+     * ログインのリクエストの本文を作成
+     *
+     * @param email メールアドレス
+     * @param password パスワード
+     * @return JSONの本文
+     */
+    private static String bodyOf(String email, String password) {
+        return "{\"email\":\"%s\",\"password\":\"%s\"}".formatted(email, password);
     }
 
     /**

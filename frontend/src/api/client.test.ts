@@ -39,6 +39,15 @@ describe('APIの呼び出し', () => {
     expect(hasAccessToken()).toBe(false)
   })
 
+  it('ログインは独自の見出しを付けて呼び出す。', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { accessToken: 'token', tokenType: 'Bearer', expiresIn: 300 }))
+
+    await login('hanako@example.com', 'password')
+
+    const init = fetchMock.mock.calls[0][1]
+    expect(init?.headers).toEqual({ 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' })
+  })
+
   it('再発行は独自の見出しを付けて呼び出す。', async () => {
     fetchMock.mockResolvedValue(jsonResponse(200, { accessToken: 'token', tokenType: 'Bearer', expiresIn: 300 }))
 

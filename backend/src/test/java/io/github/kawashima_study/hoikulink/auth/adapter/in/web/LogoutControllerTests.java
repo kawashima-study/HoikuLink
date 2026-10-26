@@ -118,4 +118,32 @@ class LogoutControllerTests {
         mockMvc.perform(post(LOGOUT_PATH).header(HttpHeaders.ORIGIN, AuthApiTestSupport.ALLOWED_ORIGIN))
                 .andExpect(status().isForbidden());
     }
+
+    /**
+     * 許可していない送信元からの場合に403になることを確認
+     *
+     * @throws Exception APIの呼び出しに失敗した場合
+     */
+    @Test
+    @DisplayName("許可していない送信元からなら403を返す。")
+    void rejectsOtherOrigin() throws Exception {
+        // 他のサイトを送信元としてログアウトすると403になることを確認
+        mockMvc.perform(post(LOGOUT_PATH)
+                        .header(CsrfGuard.CUSTOM_HEADER_NAME, CsrfGuard.CUSTOM_HEADER_VALUE)
+                        .header(HttpHeaders.ORIGIN, "https://evil.example.com"))
+                .andExpect(status().isForbidden());
+    }
+
+    /**
+     * 送信元の見出しがない場合に403になることを確認
+     *
+     * @throws Exception APIの呼び出しに失敗した場合
+     */
+    @Test
+    @DisplayName("送信元の見出しがなければ403を返す。")
+    void rejectsWithoutOrigin() throws Exception {
+        // 送信元の見出しを付けずにログアウトすると403になることを確認
+        mockMvc.perform(post(LOGOUT_PATH).header(CsrfGuard.CUSTOM_HEADER_NAME, CsrfGuard.CUSTOM_HEADER_VALUE))
+                .andExpect(status().isForbidden());
+    }
 }
