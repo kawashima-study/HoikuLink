@@ -113,10 +113,10 @@ dependencies {
 
     // 脆弱性の対応（SpringBootが決める版より新しい修正版を使う。Spring Bootの次の修正版で直り次第削除）
     constraints {
-        implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.25")
-        implementation("org.apache.tomcat.embed:tomcat-embed-el:11.0.25")
-        implementation("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.25")
-        add("checkstyle", "org.apache.commons:commons-lang3:3.18.0")
+        implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.27")
+        implementation("org.apache.tomcat.embed:tomcat-embed-el:11.0.27")
+        implementation("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.27")
+        add("checkstyle", "org.apache.commons:commons-lang3:3.21.0")
         add("checkstyle", "org.codehaus.plexus:plexus-utils:3.6.1")
     }
 }
