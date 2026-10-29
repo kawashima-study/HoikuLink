@@ -29,6 +29,15 @@ describe('ログイン画面', () => {
     expect(login).not.toHaveBeenCalled()
   })
 
+  it('表示ボタンを押すとパスワードの欄に文字を表示する。', async () => {
+    const login = vi.fn<AuthContextValue['login']>()
+    renderLoginPage(login)
+
+    await userEvent.click(screen.getByRole('button', { name: 'パスワードを表示' }))
+
+    expect(screen.getByLabelText('パスワード')).toHaveAttribute('type', 'text')
+  })
+
   it('入力したメールアドレスとパスワードでログインする。', async () => {
     const login = vi.fn<AuthContextValue['login']>().mockResolvedValue(undefined)
     renderLoginPage(login)

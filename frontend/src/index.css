@@ -22,7 +22,7 @@ h1 {
   margin: 0 0 24px;
   font-size: 24px;
   text-align: center;
-  color: #2f6f4e;
+  color: #c2410c;
 }
 
 form {
@@ -47,16 +47,26 @@ button {
   margin-top: 16px;
   padding: 12px;
   font-size: 16px;
-  color: #ffffff;
-  background-color: #2f6f4e;
+  color: #1f2933;
+  background-color: #fdba74;
   border: none;
   border-radius: 8px;
   cursor: pointer;
 }
 
 button:disabled {
-  background-color: #9bb8a8;
+  background-color: #fdf3c4;
   cursor: default;
+}
+
+.toggle-password {
+  align-self: flex-end;
+  margin-top: 0;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: #616e7c;
+  background-color: transparent;
+  border: 1px solid #c8ccd0;
 }
 
 .error {
