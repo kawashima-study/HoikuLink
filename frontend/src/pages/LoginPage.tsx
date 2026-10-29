@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
@@ -11,8 +11,9 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (email.trim() === '' || password === '') {
       setError('メールアドレスとパスワードを入力してください。')
@@ -49,11 +50,20 @@ export function LoginPage() {
         <label htmlFor="password">パスワード</label>
         <input
           id="password"
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        <button
+          type="button"
+          className="toggle-password"
+          aria-label="パスワードを表示"
+          aria-pressed={showPassword}
+          onClick={() => setShowPassword((prev) => !prev)}
+        >
+          {showPassword ? '非表示' : '表示'}
+        </button>
         {error !== null && (
           <p className="error" role="alert">
             {error}
