@@ -117,7 +117,7 @@ dependencies {
         implementation("org.apache.tomcat.embed:tomcat-embed-el:11.0.25")
         implementation("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.25")
         add("checkstyle", "org.apache.commons:commons-lang3:3.18.0")
-        add("checkstyle", "org.codehaus.plexus:plexus-utils:3.6.1")
+        add("checkstyle", "org.codehaus.plexus:plexus-utils:4.1.0")
     }
 }
 
