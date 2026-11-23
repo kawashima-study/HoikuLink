@@ -18,7 +18,7 @@ buildscript {
     }
     dependencies {
         // jOOQのコード生成（generateJooq）で使う部品。版はSpring BootのBOMで決める
-        classpath(platform("org.springframework.boot:spring-boot-dependencies:4.1.1"))
+        classpath(platform("org.springframework.boot:spring-boot-dependencies:4.1.2"))
         classpath("org.jooq:jooq-codegen")
         classpath("org.flywaydb:flyway-mysql")
         classpath("com.mysql:mysql-connector-j")
@@ -37,8 +37,8 @@ buildscript {
 plugins {
     java
     checkstyle
-    id("org.springframework.boot") version "4.1.1"
-    id("com.diffplug.spotless") version "8.10.4"
+    id("org.springframework.boot") version "4.1.2"
+    id("com.diffplug.spotless") version "8.11.0"
 }
 
 group = "io.github.kawashima_study"
@@ -58,7 +58,7 @@ repositories {
 dependencies {
     // BOM（ライブラリの版をまとめて決める）
     implementation(platform(SpringBootPlugin.BOM_COORDINATES))
-    implementation(platform("org.springframework.modulith:spring-modulith-bom:2.1.1"))
+    implementation(platform("org.springframework.modulith:spring-modulith-bom:2.1.2"))
     developmentOnly(platform(SpringBootPlugin.BOM_COORDINATES))
 
     // Web・API
@@ -69,7 +69,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
 
     // パスワードのハッシュ値の計算（Argon2id）に使う暗号の部品（Spring Bootが版を管理していないため版を書く）
-    implementation("org.bouncycastle:bcprov-jdk18on:1.86")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.87")
     implementation("org.springframework.security:spring-security-oauth2-jose")
 
     // DB
@@ -113,10 +113,10 @@ dependencies {
 
     // 脆弱性の対応（SpringBootが決める版より新しい修正版を使う。Spring Bootの次の修正版で直り次第削除）
     constraints {
-        implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.25")
-        implementation("org.apache.tomcat.embed:tomcat-embed-el:11.0.25")
-        implementation("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.25")
-        add("checkstyle", "org.apache.commons:commons-lang3:3.18.0")
+        implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.29")
+        implementation("org.apache.tomcat.embed:tomcat-embed-el:11.0.29")
+        implementation("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.29")
+        add("checkstyle", "org.apache.commons:commons-lang3:3.22.0")
         add("checkstyle", "org.codehaus.plexus:plexus-utils:3.6.1")
     }
 }
